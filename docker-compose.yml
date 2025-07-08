@@ -1,0 +1,25 @@
+services:
+  kit-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile_kit
+    container_name: kit-manager-app
+    ports:
+      - "5125:5125"
+    volumes:
+      # Monta il volume per persistere il database
+      - ./database_kit:/app_kit/database_kit
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5125/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Volume per persistere i dati del database
+volumes:
+  kit_database:
+    driver: local
