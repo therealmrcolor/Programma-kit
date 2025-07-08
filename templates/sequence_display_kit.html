@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kit Sequenza {{ seq_num }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_kit.css') }}">
+    <style>
+        /* ... stili esistenti ... */
+        .item-info > span { margin-right: 5px; } 
+    </style>
+</head>
+<body>
+    <nav>
+        <!-- ... navbar ... -->
+        <a href="{{ url_for('kit_form_page') }}" class="nav-item">Inserimento Kit</a>
+        <a href="{{ url_for('manage_linee_page') }}" class="nav-item">Gestione Linee</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=1) }}" class="nav-item">SEQ KIT 1</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=2) }}" class="nav-item">SEQ KIT 2</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=3) }}" class="nav-item">SEQ KIT 3</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=4) }}" class="nav-item">SEQ KIT 4</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=5) }}" class="nav-item">SEQ KIT 5</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=6) }}" class="nav-item">SEQ KIT 6</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=7) }}" class="nav-item">SEQ KIT 7</a>
+    </nav>
+
+    <div class="container">
+        <div class="sequence-header">
+            <h1>Kit Items - Sequenza {{ seq_num }}</h1>
+            <div>
+                <div class="clear-by-week-form">
+                    <input type="number" id="weekNumToClear" placeholder="Sett.">
+                    <button onclick="clearKitSequenceByWeek({{ seq_num }})" class="clear-btn" style="background-color: #ffc107; color: black;">Svuota per Sett.</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="kitSequenceItemsDisplay" class="sequence-items">
+            <table class="kit-table">
+                <thead>
+                    <tr>
+                        <th>Linea</th>
+                        <th>Colore</th>
+                        <th>Quantità</th>
+                        <th>Settimana</th>
+                        <th>Pronto</th>
+                        <th>Note</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="kitSequenceTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit Modal per Kit Items -->
+    <div id="editKitItemModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2>Modifica Elemento Kit</h2>
+            <form id="editKitItemForm" class="data-form">
+                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="modalEditNumeroSettimana">NUMERO SETTIMANA</label>
+                        <input type="number" id="modalEditNumeroSettimana" name="numero_settimana" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalEditLinea">LINEA</label>
+                        <select id="modalEditLinea" name="linea" required></select>
+                    </div>
+                 </div>
+                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="modalEditColore">COLORE</label>
+                        <input type="text" id="modalEditColore" name="colore" required>
+                    </div>
+                    <!-- NUOVO CAMPO NUMERO CARRELLI NEL MODAL -->
+                    <div class="form-group">
+                        <label for="modalEditNumeroCarrelli">NUMERO CARRELLI</label>
+                        <input type="number" id="modalEditNumeroCarrelli" name="numero_carrelli" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="modalEditPronto">PRONTO</label>
+                        <select id="modalEditPronto" name="pronto" required>
+                            <option value="Si">Si</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="modalEditNote">NOTE</label>
+                    <textarea id="modalEditNote" name="note"></textarea>
+                </div>
+                <input type="hidden" id="modalEditItemId">
+                <button type="submit" class="submit-btn">Salva Modifiche</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const currentSequenceNum = {{ seq_num }};
+    </script>
+    <script src="{{ url_for('static', filename='sequence_display_kit.js') }}"></script>
+</body>
+</html>

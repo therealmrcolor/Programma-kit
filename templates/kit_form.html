@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inserimento Kit Verniciato</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_kit.css') }}">
+    <style>
+        .kit-form-header { /* ... */ }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('kit_form_page') }}" class="nav-item">Inserimento Kit</a>
+        <a href="{{ url_for('manage_linee_page') }}" class="nav-item">Gestione Linee</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=1) }}" class="nav-item">SEQ KIT 1</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=2) }}" class="nav-item">SEQ KIT 2</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=3) }}" class="nav-item">SEQ KIT 3</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=4) }}" class="nav-item">SEQ KIT 4</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=5) }}" class="nav-item">SEQ KIT 5</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=6) }}" class="nav-item">SEQ KIT 6</a>
+        <a href="{{ url_for('kit_sequence_display_page', seq_num=7) }}" class="nav-item">SEQ KIT 7</a>
+    </nav>
+
+    <div class="container">
+        <h1>Inserimento Dati Kit Verniciato</h1>
+        <div class="kit-form-header">KIT VERNICIATO</div>
+        
+        <form id="kitDataForm" class="data-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="numero_settimana">NUMERO SETTIMANA</label>
+                    <input type="number" id="numero_settimana" name="numero_settimana" required>
+                </div>
+                <div class="form-group">
+                    <label for="linea">LINEA</label>
+                    <select id="linea" name="linea" required>
+                        <option value="">Caricamento linee...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="colore">COLORE</label>
+                    <input type="text" id="colore" name="colore" required>
+                </div>
+            </div>
+            <div class="form-row">
+                 <div class="form-group">
+                    <label for="sequenza">SEQUENZA (1-7)</label>
+                    <select id="sequenza" name="sequenza" required>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
+                </div>
+                <!-- NUOVO CAMPO NUMERO CARRELLI -->
+                <div class="form-group">
+                    <label for="numero_carrelli">NUMERO CARRELLI</label>
+                    <input type="number" id="numero_carrelli" name="numero_carrelli" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="pronto">PRONTO</label>
+                    <select id="pronto" name="pronto" required>
+                        <option value="Si">Si</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="note">NOTE</label>
+                <textarea id="note" name="note"></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Aggiungi Kit</button>
+        </form>
+
+        <div class="recent-items">
+            <h2>Ultimi kit aggiunti</h2>
+            <div id="recentKitItemsList">
+                <table class="kit-table">
+                    <thead>
+                        <tr>
+                            <th>Linea</th>
+                            <th>Colore</th>
+                            <th>Quantità</th>
+                            <th>Settimana</th>
+                            <th>Sequenza</th>
+                            <th>Pronto</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentKitTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2>Modifica Elemento Kit</h2>
+            <form id="editKitForm" class="data-form">
+                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="editNumeroSettimana">NUMERO SETTIMANA</label>
+                        <input type="number" id="editNumeroSettimana" name="numero_settimana" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLinea">LINEA</label>
+                        <select id="editLinea" name="linea" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editColore">COLORE</label>
+                        <input type="text" id="editColore" name="colore" required>
+                    </div>
+                </div>
+                 <div class="form-row">
+                    <!-- NUOVO CAMPO NUMERO CARRELLI NEL MODAL -->
+                    <div class="form-group">
+                        <label for="editNumeroCarrelli">NUMERO CARRELLI</label>
+                        <input type="number" id="editNumeroCarrelli" name="numero_carrelli" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPronto">PRONTO</label>
+                        <select id="editPronto" name="pronto" required>
+                            <option value="Si">Si</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="editNote">NOTE</label>
+                    <textarea id="editNote" name="note"></textarea>
+                </div>
+                <input type="hidden" id="editItemId">
+                <input type="hidden" id="editItemSequence">
+                <button type="submit" class="submit-btn">Salva Modifiche</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='kit_form.js') }}"></script>
+</body>
+</html>

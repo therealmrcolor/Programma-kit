@@ -1,0 +1,425 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f0f2f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+nav {
+    background-color: #333;
+    padding: 1rem;
+    display: flex;
+    justify-content: center; /* Centra i link nella navbar */
+    gap: 1rem;
+}
+
+.nav-item {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+}
+
+.nav-item:hover {
+    background-color: #555;
+}
+
+.data-form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px; /* Aggiunto per spaziatura se ci sono elementi sotto */
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    flex: 1;
+}
+
+.full-width {
+    width: 100%; /* Dovrebbe essere gestito da flex:1 in un .form-row, o applicato a un div che non è in form-row */
+}
+/* Se .full-width è usato per un .form-group che deve occupare tutta la riga da solo */
+.form-group.full-width {
+    flex-basis: 100%;
+}
+
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+.ub-grid {
+    display: grid;
+    grid-template-columns: 150px repeat(5, 1fr); /* Header riga + 5 colonne UB */
+    gap: 10px;
+    margin: 20px 0;
+    align-items: center;
+}
+
+.row-header {
+    font-weight: bold;
+    text-align: right;
+    padding-right: 15px;
+    color: #333;
+}
+
+.ub-header {
+    font-weight: bold;
+    text-align: center;
+    padding: 8px; /* Aumentato padding per coerenza */
+    background-color: #e9ecef; /* Schiarito per distinguerlo */
+    border-radius: 4px;
+}
+
+.submit-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s ease; /* Aggiunta transizione */
+}
+
+.submit-btn:hover {
+    background-color: #45a049;
+}
+
+.recent-items {
+    margin-top: 30px;
+}
+
+.sequence-item { /* Usato per visualizzare item nelle liste */
+    background-color: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    padding-top: 45px;  /* Spazio per i bottoni azione */
+}
+
+.item-actions {
+    position: absolute;
+    top: 10px; /* Aggiustato posizionamento */
+    right: 10px;
+    display: flex;
+    gap: 8px; /* Aumentato gap */
+}
+
+.edit-btn, 
+.delete-btn {
+    width: 30px; /* Dimensioni standard per i bottoni icona */
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px; /* O dimensione icona se usi font-icon */
+    padding: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Ombra leggera */
+}
+
+.edit-btn {
+    background-color: #28a745; /* Verde bootstrap success */
+    color: white;
+}
+.edit-btn:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    background-color: #dc3545; /* Rosso bootstrap danger */
+    color: white;
+}
+.delete-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+
+.clear-btn { /* Bottone per svuotare sequenza */
+    background-color: #ff4444; /* Coerente con delete-btn o un altro colore se preferisci */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px; /* Leggermente meno padding del submit principale */
+    cursor: pointer;
+    font-size: 14px; /* Più piccolo del submit principale */
+    transition: background-color 0.2s ease;
+}
+
+.clear-btn:hover {
+    background-color: #cc0000;
+}
+
+.sequence-header { /* Header per la pagina di visualizzazione sequenza */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Stili specifici per la griglia DENTRO un item visualizzato */
+.item-grid { 
+    display: grid;
+    grid-template-columns: 150px repeat(5, 1fr);
+    gap: 5px; /* Gap più piccolo per la visualizzazione */
+    margin-top: 15px;
+    background-color: #f8f9fa; /* Sfondo leggero per la griglia dell'item */
+    padding: 10px; /* Padding interno */
+    border-radius: 4px;
+    font-size: 0.9em; /* Testo leggermente più piccolo */
+}
+
+.item-grid > div { /* Cella della griglia item */
+    padding: 5px;
+    text-align: center;
+    border: 1px solid #e9ecef; /* Bordo leggero per celle */
+    background-color: white; /* Sfondo celle */
+}
+.item-grid .row-header, .item-grid .ub-header { /* Header dentro la griglia dell'item */
+    background-color: #e9ecef; /* Sfondo per header interni alla griglia item */
+    font-weight: bold;
+}
+.item-grid .row-header {
+    text-align: right;
+    padding-right: 10px;
+}
+
+
+.item-info {
+    margin-bottom: 10px;
+    display: flex; /* Per allineare span e valore */
+    flex-wrap: wrap; /* Per andare a capo se non c'è spazio */
+    gap: 5px 15px; /* Gap tra label e valore, e tra coppie */
+}
+
+.item-info span { /* Etichetta tipo "Colore:", "Pronto:" */
+    font-weight: bold;
+    /* margin-right: 5px; -- rimosso, usa gap */
+}
+
+/* Modal styles */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 100; /* Assicura che sia sopra tutto */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.5); /* Sfondo più scuro */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* Più margine in alto */
+    padding: 25px; /* Più padding */
+    border: 1px solid #bbb; /* Bordo più definito */
+    width: 80%;
+    max-width: 700px; /* Larghezza massima per il modal */
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Ombra più pronunciata */
+}
+
+.close { /* Bottone chiusura modal */
+    color: #aaa;
+    float: right; /* Mantiene a destra */
+    font-size: 30px; /* Più grande */
+    font-weight: bold;
+    line-height: 1; /* Per allineamento verticale */
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Stili per kit_form.html specifici */
+.kit-form-header {
+    background-color: #e9ecef;
+    padding: 10px 15px; /* Aggiustato padding */
+    margin-bottom: 25px; /* Più margine sotto */
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.2em;
+    border: 1px solid #dee2e6; /* Bordo leggero */
+}
+
+/* Stili per manage_linee.html */
+.linea-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 10px; /* Aumentato padding */
+    border-bottom: 1px solid #eee; 
+    background-color: white; /* Sfondo per ogni item */
+    border-radius: 4px; /* Angoli arrotondati */
+    margin-bottom: 5px; /* Spazio tra item */
+}
+.linea-item:last-child {
+    border-bottom: none; /* Rimuove bordo per l'ultimo item */
+}
+.linea-item button { 
+    margin-left: 10px; 
+}
+#addLineaForm { 
+    margin-bottom: 25px; /* Più spazio sotto il form di aggiunta */
+}
+#lineeList {
+    background-color: #f8f9fa; /* Sfondo per la lista */
+    padding: 15px;
+    border-radius: 4px;
+}
+
+/* Stile per il form di svuotamento per settimana */
+.clear-by-week-form { 
+    margin-left: 15px; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px;
+}
+.clear-by-week-form input[type="number"] {
+    width: 90px; /* Larghezza per l'input settimana */
+    padding: 8px; /* Coerenza con altri input */
+}
+.clear-by-week-form .clear-btn { /* Stile specifico per il bottone "Svuota per Sett." */
+    background-color: #ffc107; /* Giallo bootstrap warning */
+    color: black;
+    font-size: 13px; /* Leggermente più piccolo */
+    padding: 9px 12px; /* Padding specifico */
+}
+
+/* Stili per le tabelle dei kit */
+.kit-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.kit-table th,
+.kit-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.kit-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.kit-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.kit-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.kit-table .action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.kit-table .edit-btn,
+.kit-table .delete-btn {
+    padding: 5px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.kit-table .edit-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.kit-table .edit-btn:hover {
+    background-color: #0056b3;
+}
+
+.kit-table .delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.kit-table .delete-btn:hover {
+    background-color: #c82333;
+}
+
+.kit-table .status-ready {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.kit-table .status-not-ready {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.kit-table .notes-cell {
+    max-width: 200px;
+    word-wrap: break-word;
+    font-size: 11px;
+    color: #666;
+}
+
+.text-center {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
