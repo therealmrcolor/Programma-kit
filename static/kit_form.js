@@ -4,6 +4,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const lineaSelect = document.getElementById('linea');
     const editLineaSelect = document.getElementById('editLinea');
 
+    // Funzione per calcolare il numero della settimana dell'anno
+    function getWeekNumber(date) {
+        const startDate = new Date(date.getFullYear(), 0, 1);
+        const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+        return Math.ceil((days + startDate.getDay() + 1) / 7);
+    }
+
+    // Funzione per formattare il colore (aggiunge RAL se 4 cifre)
+    function formatColor(color) {
+        if (color && /^\d{4}$/.test(color.toString())) {
+            return `RAL${color}`;
+        }
+        return color;
+    }
+
+    // Pre-compila il numero settimana con la settimana corrente
+    const currentWeek = getWeekNumber(new Date());
+    document.getElementById('numero_settimana').value = currentWeek;
+
     async function loadLinee() { /* ... (invariato) ... */ 
         try {
             const response = await fetch('/api/get_linee');
@@ -89,11 +108,11 @@ document.addEventListener('DOMContentLoaded', function() {
             tableBody.innerHTML = items.map(item => `
                 <tr>
                     <td>${item.linea || 'N/D'}</td>
-                    <td>${item.colore}</td>
+                    <td>${formatColor(item.colore)}</td>
                     <td>${item.numero_carrelli !== null ? item.numero_carrelli : 'N/D'}</td>
                     <td>${item.numero_settimana || 'N/D'}</td>
                     <td>SEQ ${item.sequenza}</td>
-                    <td><span class="${item.pronto === 'Si' ? 'status-ready' : 'status-not-ready'}">${item.pronto}</span></td>
+                    <td><span class="${item.pronto === 'Si' ? 'status-ready' : (item.pronto === 'Parziale' ? 'status-partial' : 'status-not-ready')}">${item.pronto}</span></td>
                     <td class="action-buttons">
                         <button class="edit-btn" onclick='editKitItem(${escapeForHtmlAttr(JSON.stringify(item))})'>✎</button>
                         <button class="delete-btn" onclick="deleteKitItem(${item.sequenza}, ${item.id})">×</button>

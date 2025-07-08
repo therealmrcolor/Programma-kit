@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const modalEditLineaSelect = document.getElementById('modalEditLinea');
 
+    // Funzione per formattare il colore (aggiunge RAL se 4 cifre)
+    function formatColor(color) {
+        if (color && /^\d{4}$/.test(color.toString())) {
+            return `RAL${color}`;
+        }
+        return color;
+    }
+
     async function loadAvailableLineeForModal() { /* ... (invariato) ... */ 
         try {
             const response = await fetch('/api/get_linee');
@@ -39,10 +47,10 @@ document.addEventListener('DOMContentLoaded', function() {
             tableBody.innerHTML = items.map(item => `
                 <tr>
                     <td>${item.linea || 'N/D'}</td>
-                    <td>${item.colore}</td>
+                    <td>${formatColor(item.colore)}</td>
                     <td>${item.numero_carrelli !== null ? item.numero_carrelli : 'N/D'}</td>
                     <td>${item.numero_settimana || 'N/D'}</td>
-                    <td><span class="${item.pronto === 'Si' ? 'status-ready' : 'status-not-ready'}">${item.pronto}</span></td>
+                    <td><span class="${item.pronto === 'Si' ? 'status-ready' : (item.pronto === 'Parziale' ? 'status-partial' : 'status-not-ready')}">${item.pronto}</span></td>
                     <td class="notes-cell">${item.note || ''}</td>
                     <td class="action-buttons">
                         <button class="edit-btn" onclick='openEditKitModal(${escapeForHtmlAttr(JSON.stringify(item))})'>✎</button>

@@ -411,6 +411,11 @@ textarea {
     font-weight: bold;
 }
 
+.kit-table .status-partial {
+    color: #ffc107;
+    font-weight: bold;
+}
+
 .kit-table .notes-cell {
     max-width: 200px;
     word-wrap: break-word;
