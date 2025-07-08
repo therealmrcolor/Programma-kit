@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Linee</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_kit.css') }}">
+    <style>
+        .linea-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        .linea-item button { margin-left: 10px; }
+        #addLineaForm { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('kit_form_page') }}" class="nav-item">Inserimento Kit</a>
+        <a href="{{ url_for('manage_linee_page') }}" class="nav-item">Gestione Linee</a>
+        <a href="/sequence/1" class="nav-item">SEQ 1</a>
+        <!-- ... altri link SEQ ... -->
+        <a href="/sequence/7" class="nav-item">SEQ 7</a>
+    </nav>
+    <div class="container">
+        <h1>Gestione Linee Disponibili</h1>
+        <form id="addLineaForm" class="data-form">
+            <div class="form-group">
+                <label for="nomeLinea">Nuova Linea:</label>
+                <input type="text" id="nomeLinea" name="nomeLinea" required>
+            </div>
+            <button type="submit" class="submit-btn">Aggiungi Linea</button>
+        </form>
+
+        <h2>Linee Esistenti</h2>
+        <div id="lineeList">
+            <p>Caricamento...</p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='manage_linee.js') }}"></script>
+</body>
+</html>

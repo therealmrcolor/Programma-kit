@@ -1,0 +1,24 @@
+# Usa un'immagine base Python
+FROM python:3.9-slim
+
+# Imposta la directory di lavoro nell'immagine
+WORKDIR /app_kit
+
+# Copia il file delle dipendenze
+COPY requirements_kit.txt requirements_kit.txt
+
+# Installa le dipendenze
+RUN pip install --no-cache-dir -r requirements_kit.txt
+
+# Copia il resto dell'applicazione nella directory di lavoro
+COPY . .
+# Se hai una directory database_kit con un db pre-popolato che vuoi includere:
+# COPY database_kit /app_kit/database_kit
+
+# Esponi la porta su cui l'app Flask girerà (Waitress)
+# Deve corrispondere alla porta usata in app_kit.py
+EXPOSE 5124
+
+# Comando per avviare l'applicazione quando il container parte
+# Assicurati che app_kit.py sia eseguibile o chiama python direttamente
+CMD ["python", "app_kit.py"]
