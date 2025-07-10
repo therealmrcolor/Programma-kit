@@ -37,16 +37,16 @@
         
         <div id="kitSequenceItemsDisplay" class="sequence-items">
             <table class="kit-table">
-                <thead>
-                    <tr>
-                        <th>Linea</th>
-                        <th>Colore</th>
-                        <th>Quantità</th>
-                        <th>Settimana</th>
-                        <th>Pronto</th>
-                        <th>Note</th>
-                        <th>Azioni</th>
-                    </tr>
+                <thead>                        <tr>
+                            <th>Linea</th>
+                            <th>Colore</th>
+                            <th>Quantità</th>
+                            <th>Settimana</th>
+                            <th>Pronto</th>
+                            <th>Painting List</th>
+                            <th>Note</th>
+                            <th>Azioni</th>
+                        </tr>
                 </thead>
                 <tbody id="kitSequenceTableBody">
                 </tbody>
@@ -93,6 +93,34 @@
                     <label for="modalEditNote">NOTE</label>
                     <textarea id="modalEditNote" name="note"></textarea>
                 </div>
+
+                <!-- Painting List Section nel Modal -->
+                <div class="form-group full-width">
+                    <div class="painting-list-header">
+                        <label>PAINTING LIST (<span id="modalEditPaintingListCount">0</span> codici)</label>
+                    </div>
+                    <div id="modalEditPaintingListContainer" class="painting-list-container">
+                        <div class="painting-list-input-group">
+                            <input type="text" id="modalEditPaintingListScanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
+                            <button type="button" id="modalEditClearPaintingList" class="clear-btn">Pulisci Lista</button>
+                        </div>
+                        <div class="scanned-codes-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Codice</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modalEditScannedCodesBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <input type="hidden" id="modalEditPaintingList" name="painting_list">
+                </div>
+
                 <input type="hidden" id="modalEditItemId">
                 <button type="submit" class="submit-btn">Salva Modifiche</button>
             </form>

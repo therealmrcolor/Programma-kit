@@ -9,6 +9,93 @@ document.addEventListener('DOMContentLoaded', function() {
         return color;
     }
 
+    // Setup Painting List per modal
+    setupPaintingListForModal();
+
+    function setupPaintingListForModal() {
+        setupPaintingListForForm(
+            'modalEditPaintingListScanner', 
+            'modalEditPaintingList', 
+            'modalEditScannedCodesBody', 
+            'modalEditPaintingListCount', 
+            'modalEditClearPaintingList'
+        );
+    }
+
+    function setupPaintingListForForm(scannerId, hiddenInputId, tableBodyId, countId, clearBtnId) {
+        const scannerInput = document.getElementById(scannerId);
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const tableBody = document.getElementById(tableBodyId);
+        const countElement = document.getElementById(countId);
+        const clearBtn = document.getElementById(clearBtnId);
+        
+        if (!scannerInput) return;
+
+        scannerInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const code = scannerInput.value.trim();
+                if (code) {
+                    addCodeToPaintingList(code, hiddenInput, tableBody, countElement);
+                    scannerInput.value = '';
+                }
+            }
+        });
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                if (confirm('Sei sicuro di voler pulire tutta la lista?')) {
+                    hiddenInput.value = '';
+                    updateScannedCodesTable(hiddenInput, tableBody, countElement);
+                }
+            });
+        }
+    }
+
+    function addCodeToPaintingList(code, hiddenInput, tableBody, countElement) {
+        const currentCodes = hiddenInput.value ? hiddenInput.value.split('\n') : [];
+        if (!currentCodes.includes(code)) {
+            currentCodes.push(code);
+            hiddenInput.value = currentCodes.join('\n');
+            updateScannedCodesTable(hiddenInput, tableBody, countElement);
+        }
+    }
+    
+    function removeCodeFromPaintingList(index, hiddenInput, tableBody, countElement) {
+        const lines = hiddenInput.value.split('\n');
+        lines.splice(index, 1);
+        hiddenInput.value = lines.join('\n');
+        updateScannedCodesTable(hiddenInput, tableBody, countElement);
+    }
+
+    function updateScannedCodesTable(hiddenInput, tableBody, countElement) {
+        const lines = hiddenInput.value.trim() ? hiddenInput.value.split('\n').filter(line => line.trim()) : [];
+        
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
+        
+        lines.forEach((code, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${code.trim()}</td>
+                <td>
+                    <button type="button" class="remove-code-btn" onclick="removeCodeFromPaintingList(${index}, document.getElementById('${hiddenInput.id}'), document.getElementById('${tableBody.id}'), document.getElementById('${countElement.id}'))">
+                        ×
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        if (countElement) {
+            countElement.textContent = lines.length;
+        }
+    }
+
+    // Rendi globali le funzioni
+    window.removeCodeFromPaintingList = removeCodeFromPaintingList;
+
     async function loadAvailableLineeForModal() { /* ... (invariato) ... */ 
         try {
             const response = await fetch('/api/get_linee');
@@ -38,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (!items || items.length === 0) {
-                tableBody.innerHTML = "<tr><td colspan='7' class='text-center'>Nessun kit in questa sequenza.</td></tr>";
+                tableBody.innerHTML = "<tr><td colspan='8' class='text-center'>Nessun kit in questa sequenza.</td></tr>";
                 return;
             }
             
@@ -51,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>${item.numero_carrelli !== null ? item.numero_carrelli : 'N/D'}</td>
                     <td>${item.numero_settimana || 'N/D'}</td>
                     <td><span class="${item.pronto === 'Si' ? 'status-ready' : (item.pronto === 'Parziale' ? 'status-partial' : 'status-not-ready')}">${item.pronto}</span></td>
+                    <td>${createPaintingListCell(item.painting_list)}</td>
                     <td class="notes-cell">${item.note || ''}</td>
                     <td class="action-buttons">
                         <button class="edit-btn" onclick='openEditKitModal(${escapeForHtmlAttr(JSON.stringify(item))})'>✎</button>
@@ -62,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Errore caricamento kit items per display:', error);
             const tableBody = document.getElementById('kitSequenceTableBody');
             if (tableBody) {
-                tableBody.innerHTML = "<tr><td colspan='7' class='text-center'>Errore caricamento kit.</td></tr>";
+                tableBody.innerHTML = "<tr><td colspan='8' class='text-center'>Errore caricamento kit.</td></tr>";
             }
         }
     }
@@ -78,13 +166,20 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const itemId = document.getElementById('modalEditItemId').value;
         
+        // Gestione automatica del prefisso RAL per codici di 4 cifre
+        let modalEditColoreValue = document.getElementById('modalEditColore').value.trim();
+        if (/^\d{4}$/.test(modalEditColoreValue)) {
+            modalEditColoreValue = 'RAL' + modalEditColoreValue;
+        }
+        
         const formData = {
             numero_settimana: document.getElementById('modalEditNumeroSettimana').value,
             linea: document.getElementById('modalEditLinea').value,
-            colore: document.getElementById('modalEditColore').value,
+            colore: modalEditColoreValue,
             numero_carrelli: document.getElementById('modalEditNumeroCarrelli').value, // NUOVO
             pronto: document.getElementById('modalEditPronto').value,
-            note: document.getElementById('modalEditNote').value
+            note: document.getElementById('modalEditNote').value,
+            painting_list: document.getElementById('modalEditPaintingList').value
         };
 
         try {
@@ -114,6 +209,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalEditNumeroCarrelli').value = item.numero_carrelli !== null ? item.numero_carrelli : ''; // NUOVO
         document.getElementById('modalEditPronto').value = item.pronto || 'No';
         document.getElementById('modalEditNote').value = item.note || '';
+        
+        // Popola la Painting List
+        const modalEditPaintingList = document.getElementById('modalEditPaintingList');
+        if (modalEditPaintingList) {
+            modalEditPaintingList.value = item.painting_list || '';
+            updateScannedCodesTable(
+                modalEditPaintingList, 
+                document.getElementById('modalEditScannedCodesBody'), 
+                document.getElementById('modalEditPaintingListCount')
+            );
+        }
+        
         modal.style.display = 'block';
     }
 
@@ -158,6 +265,56 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+
+    // Funzione per creare la cella della painting list con dropdown
+    function createPaintingListCell(paintingList) {
+        if (!paintingList || !paintingList.trim()) {
+            return 'Nessuna';
+        }
+        
+        const codes = paintingList.split('\n').filter(c => c.trim());
+        const count = codes.length;
+        const dropdownId = 'dropdown_' + Math.random().toString(36).substr(2, 9);
+        
+        return `
+            <div class="painting-dropdown">
+                <button class="painting-btn" onclick="togglePaintingDropdown('${dropdownId}')">${count} codici</button>
+                <div id="${dropdownId}" class="painting-dropdown-content">
+                    <div class="painting-dropdown-header">Codici Painting List (${count})</div>
+                    ${codes.map(code => `<div class="painting-code-item">${code.trim()}</div>`).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Funzione per gestire il toggle del dropdown
+    function togglePaintingDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        if (!dropdown) return;
+        
+        // Chiudi tutti gli altri dropdown aperti
+        document.querySelectorAll('.painting-dropdown-content.show').forEach(el => {
+            if (el.id !== dropdownId) {
+                el.classList.remove('show');
+            }
+        });
+        
+        // Toggle del dropdown corrente
+        dropdown.classList.toggle('show');
+    }
+
+    // Chiudi dropdown quando si clicca altrove
+    document.addEventListener('click', function(event) {
+        if (!event.target.matches('.painting-btn')) {
+            document.querySelectorAll('.painting-dropdown-content.show').forEach(el => {
+                el.classList.remove('show');
+            });
+        }
+    });
+
+    // Rendi le funzioni globali
+    window.createPaintingListCell = createPaintingListCell;
+    window.togglePaintingDropdown = togglePaintingDropdown;
 
     loadAvailableLineeForModal();
     loadKitItems();

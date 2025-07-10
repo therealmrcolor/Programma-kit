@@ -14,18 +14,56 @@ def adapt_datetime(ts):
     return ts.isoformat()
 
 def item_row_to_dict(item_row):
-    # Schema aggiornato con numero_carrelli
-    return {
-        'id': item_row[0],
-        'numero_settimana': item_row[1],
-        'linea': item_row[2],
-        'colore': item_row[3],
-        'sequenza': item_row[4],
-        'numero_carrelli': item_row[5], # NUOVO CAMPO
-        'pronto': item_row[6],          # Indice shiftato
-        'note': item_row[7],            # Indice shiftato
-        'timestamp': item_row[8]        # Indice shiftato
-    }
+    # Schema flessibile che gestisce diverse strutture di colonne
+    try:
+        # Se la riga ha 10 colonne (formato attuale con tutte le colonne)
+        if len(item_row) == 10:
+            return {
+                'id': item_row[0],
+                'numero_settimana': item_row[1],
+                'linea': item_row[2],
+                'colore': item_row[3],
+                'sequenza': item_row[4],
+                'numero_carrelli': item_row[5],
+                'pronto': item_row[6],
+                'note': item_row[7],
+                'timestamp': item_row[8],
+                'painting_list': item_row[9]
+            }
+        # Se la riga ha 9 colonne, potrebbe mancare numero_carrelli
+        elif len(item_row) == 9:
+            return {
+                'id': item_row[0],
+                'numero_settimana': item_row[1],
+                'linea': item_row[2],
+                'colore': item_row[3],
+                'sequenza': item_row[4],
+                'pronto': item_row[5],
+                'note': item_row[6],
+                'timestamp': item_row[7],
+                'painting_list': item_row[8],
+                'numero_carrelli': None  # Default per compatibilità
+            }
+        # Formato legacy con 8 colonne
+        elif len(item_row) == 8:
+            return {
+                'id': item_row[0],
+                'numero_settimana': item_row[1],
+                'linea': item_row[2],
+                'colore': item_row[3],
+                'sequenza': item_row[4],
+                'pronto': item_row[5],
+                'note': item_row[6],
+                'timestamp': item_row[7],
+                'painting_list': '',  # Default vuoto
+                'numero_carrelli': None  # Default per compatibilità
+            }
+        else:
+            print(f"Formato riga non riconosciuto: {len(item_row)} colonne - {item_row}")
+            return None
+    except Exception as e:
+        print(f"Errore parsing riga: {e} - {item_row}")
+        return None
 
 def init_db():
     db_dir = os.path.dirname(DATABASE_PATH)
@@ -37,6 +75,7 @@ def init_db():
     c = conn.cursor()
     
     for i in range(1, 8):
+        # Crea la tabella se non esiste
         c.execute(f'''
         CREATE TABLE IF NOT EXISTS sequence_{i} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,9 +86,22 @@ def init_db():
             numero_carrelli INTEGER, -- NUOVO CAMPO
             pronto TEXT NOT NULL,
             note TEXT,
+            painting_list TEXT,
             timestamp DATETIME NOT NULL 
         )
         ''')
+        
+        # Controlla se le colonne mancanti esistono, altrimenti le aggiunge
+        c.execute(f"PRAGMA table_info(sequence_{i})")
+        columns = [column[1] for column in c.fetchall()]
+        
+        if 'numero_carrelli' not in columns:
+            c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN numero_carrelli INTEGER')
+            print(f"Aggiunta colonna numero_carrelli a sequence_{i}")
+            
+        if 'painting_list' not in columns:
+            c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN painting_list TEXT')
+            print(f"Aggiunta colonna painting_list a sequence_{i}")
 
     c.execute('''
     CREATE TABLE IF NOT EXISTS linee_disponibili (
@@ -134,6 +186,7 @@ def add_item():
     numero_carrelli_str = data.get('numero_carrelli') # NUOVO
     pronto = data.get('pronto')
     note = data.get('note', '')
+    painting_list = data.get('painting_list', '') # NUOVO
 
     if numero_settimana_str is None: return jsonify({"success": False, "error": "Numero settimana mancante"}), 400
     try: numero_settimana = int(numero_settimana_str)
@@ -160,12 +213,12 @@ def add_item():
     columns_ordered = [
         'numero_settimana', 'linea', 'colore', 'sequenza', 
         'numero_carrelli', # NUOVO
-        'pronto', 'note', 'timestamp'
+        'pronto', 'note', 'painting_list', 'timestamp' # NUOVO
     ]
     values_ordered = [
         numero_settimana, linea, colore, sequenza_target_str, 
         numero_carrelli, # NUOVO
-        pronto, note, datetime.now()
+        pronto, note, painting_list, datetime.now() # NUOVO
     ]
 
     columns_sql_str = ', '.join(columns_ordered)
@@ -195,7 +248,11 @@ def get_kit_items_for_sequence(sequence_num):
     c.execute(f'SELECT * FROM sequence_{sequence_num} ORDER BY timestamp DESC')
     items_rows = c.fetchall()
     conn.close()
-    result = [item_row_to_dict(item_row) for item_row in items_rows]
+    result = []
+    for item_row in items_rows:
+        item_dict = item_row_to_dict(item_row)
+        if item_dict is not None:
+            result.append(item_dict)
     return jsonify(result)
 
 @app.route('/api/get_recent_items_all')
@@ -205,10 +262,27 @@ def get_recent_kit_items_all():
     c = conn.cursor()
     for i in range(1, 8):
         try:
+            # Verifica che la tabella abbia tutte le colonne necessarie
+            c.execute(f"PRAGMA table_info(sequence_{i})")
+            columns = [column[1] for column in c.fetchall()]
+            expected_columns = ['id', 'numero_settimana', 'linea', 'colore', 'sequenza', 'numero_carrelli', 'pronto', 'note', 'painting_list', 'timestamp']
+            
+            # Se mancano colonne, salta questa sequenza e registra l'errore
+            missing_columns = [col for col in expected_columns if col not in columns]
+            if missing_columns:
+                print(f"Colonne mancanti in sequence_{i}: {missing_columns}")
+                continue
+                
             c.execute(f'SELECT * FROM sequence_{i}')
             items_from_sequence = c.fetchall()
             for item_row in items_from_sequence:
-                all_items_list.append(item_row_to_dict(item_row))
+                try:
+                    item_dict = item_row_to_dict(item_row)
+                    if item_dict is not None:  # Solo se il parsing è riuscito
+                        all_items_list.append(item_dict)
+                except Exception as e:
+                    print(f"Errore parsing item in sequence_{i}: {e}")
+                    continue
         except sqlite3.Error as e:
             print(f"Errore fetch da sequence_{i} per kit: {e}")
     conn.close()
@@ -227,6 +301,7 @@ def update_kit_item(sequence_num, item_id):
     numero_carrelli_str = data.get('numero_carrelli') # NUOVO
     pronto = data.get('pronto')
     note = data.get('note', '')
+    painting_list = data.get('painting_list', '') # NUOVO
 
     if numero_settimana_str is None: return jsonify({"success": False, "error": "Numero settimana mancante"}), 400
     try: numero_settimana = int(numero_settimana_str)
@@ -247,10 +322,10 @@ def update_kit_item(sequence_num, item_id):
     
     columns_to_update = ['numero_settimana', 'linea', 'colore', 
                          'numero_carrelli', # NUOVO
-                         'pronto', 'note']
+                         'pronto', 'note', 'painting_list'] # NUOVO
     update_values = [numero_settimana, linea, colore, 
                      numero_carrelli, # NUOVO
-                     pronto, note]
+                     pronto, note, painting_list] # NUOVO
     
     set_clause = ', '.join([f'{col} = ?' for col in columns_to_update])
     update_values.append(item_id)

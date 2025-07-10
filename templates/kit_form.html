@@ -76,6 +76,33 @@
                 <textarea id="note" name="note"></textarea>
             </div>
 
+            <!-- Painting List Section -->
+            <div class="form-group full-width">
+                <div class="painting-list-header">
+                    <label>PAINTING LIST (<span id="paintingListCount">0</span> codici)</label>
+                </div>
+                <div id="paintingListContainer" class="painting-list-container">
+                    <div class="painting-list-input-group">
+                        <input type="text" id="painting_list_scanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
+                        <button type="button" id="clearPaintingList" class="clear-btn">Pulisci Lista</button>
+                    </div>
+                    <div class="scanned-codes-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Codice</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scannedCodesBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <input type="hidden" id="painting_list" name="painting_list">
+            </div>
+
             <button type="submit" class="submit-btn">Aggiungi Kit</button>
         </form>
 
@@ -91,6 +118,7 @@
                             <th>Settimana</th>
                             <th>Sequenza</th>
                             <th>Pronto</th>
+                            <th>Painting List</th>
                             <th>Azioni</th>
                         </tr>
                     </thead>
@@ -140,6 +168,34 @@
                     <label for="editNote">NOTE</label>
                     <textarea id="editNote" name="note"></textarea>
                 </div>
+
+                <!-- Painting List Section nel Modal -->
+                <div class="form-group full-width">
+                    <div class="painting-list-header">
+                        <label>PAINTING LIST (<span id="editPaintingListCount">0</span> codici)</label>
+                    </div>
+                    <div id="editPaintingListContainer" class="painting-list-container">
+                        <div class="painting-list-input-group">
+                            <input type="text" id="editPaintingListScanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
+                            <button type="button" id="editClearPaintingList" class="clear-btn">Pulisci Lista</button>
+                        </div>
+                        <div class="scanned-codes-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Codice</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="editScannedCodesBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editPaintingList" name="painting_list">
+                </div>
+
                 <input type="hidden" id="editItemId">
                 <input type="hidden" id="editItemSequence">
                 <button type="submit" class="submit-btn">Salva Modifiche</button>
