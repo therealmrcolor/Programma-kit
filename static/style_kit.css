@@ -652,3 +652,34 @@ textarea {
     font-style: italic;
     font-size: 12px;
 }
+
+/* Stili per checkbox "Fatto" */
+.fatto-checkbox {
+    transform: scale(1.2);
+    margin: 0 auto;
+    display: block;
+}
+
+.fatto-cell {
+    text-align: center;
+    width: 60px;
+}
+
+.fatto-cell input[type="checkbox"] {
+    transform: scale(1.3);
+    cursor: pointer;
+}
+
+.fatto-cell input[type="checkbox"]:checked {
+    accent-color: #28a745;
+}
+
+/* Stile per riga completata */
+.kit-table tr.completed {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+}
+
+.kit-table tr.completed td {
+    color: #6c757d;
+}

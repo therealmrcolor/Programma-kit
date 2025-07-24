@@ -25,9 +25,34 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('numero_settimana').value = currentWeek;
     }
 
-    // Rendi le funzioni globali
-    window.formatColor = formatColor;
-    window.setCurrentWeek = setCurrentWeek;
+        // Rendi le funzioni globali
+    window.createPaintingListCell = createPaintingListCell;
+    window.togglePaintingDropdown = togglePaintingDropdown;
+
+    // Funzione per aggiornare lo stato "fatto"
+    async function updateFattoStatus(sequenceNum, itemId, fatto) {
+        try {
+            const response = await fetch(`/api/update_fatto/${sequenceNum}/${itemId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fatto: fatto })
+            });
+            
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                alert(`Errore aggiornamento stato: ${result.error || 'Sconosciuto'}`);
+                // Ripristina il checkbox in caso di errore
+                event.target.checked = !fatto;
+            }
+        } catch (error) {
+            console.error('Errore update fatto status:', error);
+            alert('Errore di comunicazione.');
+            // Ripristina il checkbox in caso di errore
+            event.target.checked = !fatto;
+        }
+    }
+
+    window.updateFattoStatus = updateFattoStatus;
 
     // Pre-compila il numero settimana con la settimana corrente
     setCurrentWeek();
@@ -222,14 +247,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (!items || items.length === 0) {
-                tableBody.innerHTML = "<tr><td colspan='8' class='text-center'>Nessun kit recente.</td></tr>";
+                tableBody.innerHTML = "<tr><td colspan='9' class='text-center'>Nessun kit recente.</td></tr>";
                 return;
             }
             
             const escapeForHtmlAttr = (jsonString) => jsonString.replace(/'/g, "'");
 
             tableBody.innerHTML = items.map(item => `
-                <tr>
+                <tr class="${item.fatto ? 'completed' : ''}">
                     <td>${item.linea || 'N/D'}</td>
                     <td>${formatColor(item.colore)}</td>
                     <td>${item.numero_carrelli !== null ? item.numero_carrelli : 'N/D'}</td>
@@ -237,6 +262,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>SEQ ${item.sequenza}</td>
                     <td><span class="${item.pronto === 'Si' ? 'status-ready' : (item.pronto === 'Parziale' ? 'status-partial' : 'status-not-ready')}">${item.pronto}</span></td>
                     <td>${createPaintingListCell(item.painting_list)}</td>
+                    <td class="fatto-cell">
+                        <input type="checkbox" class="fatto-checkbox" ${item.fatto ? 'checked' : ''} 
+                               onchange="updateFattoStatus(${item.sequenza}, ${item.id}, this.checked)">
+                    </td>
                     <td class="action-buttons">
                         <button class="edit-btn" onclick='editKitItem(${escapeForHtmlAttr(JSON.stringify(item))})'>✎</button>
                         <button class="delete-btn" onclick="deleteKitItem(${item.sequenza}, ${item.id})">×</button>
