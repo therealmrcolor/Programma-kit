@@ -202,7 +202,8 @@ document.addEventListener('DOMContentLoaded', function() {
             numero_carrelli: document.getElementById('numero_carrelli').value, // NUOVO
             pronto: document.getElementById('pronto').value,
             note: document.getElementById('note').value,
-            painting_list: document.getElementById('painting_list').value
+            painting_list: document.getElementById('painting_list').value,
+            fatto: document.getElementById('fatto').checked // NUOVO
         };
 
         try {

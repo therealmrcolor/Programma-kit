@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Errore caricamento kit items per display:', error);
             const tableBody = document.getElementById('kitSequenceTableBody');
             if (tableBody) {
-                tableBody.innerHTML = "<tr><td colspan='8' class='text-center'>Errore caricamento kit.</td></tr>";
+                tableBody.innerHTML = "<tr><td colspan='9' class='text-center'>Errore caricamento kit.</td></tr>";
             }
         }
     }
