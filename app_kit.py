@@ -14,56 +14,21 @@ def adapt_datetime(ts):
     return ts.isoformat()
 
 def item_row_to_dict(item_row):
-    # Schema flessibile che gestisce diverse strutture di colonne
-    try:
-        # Se la riga ha 10 colonne (formato attuale con tutte le colonne)
-        if len(item_row) == 10:
-            return {
-                'id': item_row[0],
-                'numero_settimana': item_row[1],
-                'linea': item_row[2],
-                'colore': item_row[3],
-                'sequenza': item_row[4],
-                'numero_carrelli': item_row[5],
-                'pronto': item_row[6],
-                'note': item_row[7],
-                'timestamp': item_row[8],
-                'painting_list': item_row[9]
-            }
-        # Se la riga ha 9 colonne, potrebbe mancare numero_carrelli
-        elif len(item_row) == 9:
-            return {
-                'id': item_row[0],
-                'numero_settimana': item_row[1],
-                'linea': item_row[2],
-                'colore': item_row[3],
-                'sequenza': item_row[4],
-                'pronto': item_row[5],
-                'note': item_row[6],
-                'timestamp': item_row[7],
-                'painting_list': item_row[8],
-                'numero_carrelli': None  # Default per compatibilità
-            }
-        # Formato legacy con 8 colonne
-        elif len(item_row) == 8:
-            return {
-                'id': item_row[0],
-                'numero_settimana': item_row[1],
-                'linea': item_row[2],
-                'colore': item_row[3],
-                'sequenza': item_row[4],
-                'pronto': item_row[5],
-                'note': item_row[6],
-                'timestamp': item_row[7],
-                'painting_list': '',  # Default vuoto
-                'numero_carrelli': None  # Default per compatibilità
-            }
-        else:
-            print(f"Formato riga non riconosciuto: {len(item_row)} colonne - {item_row}")
-            return None
-    except Exception as e:
-        print(f"Errore parsing riga: {e} - {item_row}")
-        return None
+    if len(item_row) >= 10:
+        return {
+            'id': item_row[0],
+            'numero_settimana': item_row[1],
+            'linea': item_row[2] if item_row[2] is not None else '',
+            'colore': item_row[3] if item_row[3] is not None else '',
+            'sequenza': item_row[4],
+            'numero_carrelli': item_row[5],
+            'pronto': item_row[6] if item_row[6] is not None else 'No',
+            'note': item_row[7] if item_row[7] is not None else '',
+            'timestamp': item_row[8],
+            'painting_list': item_row[9] if item_row[9] is not None else '',
+            'fatto': bool(item_row[10]) if len(item_row) > 10 and item_row[10] is not None else False
+        }
+    return None
 
 def init_db():
     db_dir = os.path.dirname(DATABASE_PATH)
@@ -102,6 +67,10 @@ def init_db():
         if 'painting_list' not in columns:
             c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN painting_list TEXT')
             print(f"Aggiunta colonna painting_list a sequence_{i}")
+            
+        if 'fatto' not in columns:
+            c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN fatto INTEGER DEFAULT 0')
+            print(f"Aggiunta colonna fatto a sequence_{i}")
 
     c.execute('''
     CREATE TABLE IF NOT EXISTS linee_disponibili (
@@ -187,6 +156,7 @@ def add_item():
     pronto = data.get('pronto')
     note = data.get('note', '')
     painting_list = data.get('painting_list', '') # NUOVO
+    fatto = data.get('fatto', False) # NUOVO CAMPO
 
     if numero_settimana_str is None: return jsonify({"success": False, "error": "Numero settimana mancante"}), 400
     try: numero_settimana = int(numero_settimana_str)
@@ -213,12 +183,12 @@ def add_item():
     columns_ordered = [
         'numero_settimana', 'linea', 'colore', 'sequenza', 
         'numero_carrelli', # NUOVO
-        'pronto', 'note', 'painting_list', 'timestamp' # NUOVO
+        'pronto', 'note', 'painting_list', 'fatto', 'timestamp' # NUOVO con fatto
     ]
     values_ordered = [
         numero_settimana, linea, colore, sequenza_target_str, 
         numero_carrelli, # NUOVO
-        pronto, note, painting_list, datetime.now() # NUOVO
+        pronto, note, painting_list, int(fatto), datetime.now() # NUOVO con fatto
     ]
 
     columns_sql_str = ', '.join(columns_ordered)
@@ -302,6 +272,7 @@ def update_kit_item(sequence_num, item_id):
     pronto = data.get('pronto')
     note = data.get('note', '')
     painting_list = data.get('painting_list', '') # NUOVO
+    fatto = data.get('fatto', False) # NUOVO CAMPO
 
     if numero_settimana_str is None: return jsonify({"success": False, "error": "Numero settimana mancante"}), 400
     try: numero_settimana = int(numero_settimana_str)
@@ -322,10 +293,10 @@ def update_kit_item(sequence_num, item_id):
     
     columns_to_update = ['numero_settimana', 'linea', 'colore', 
                          'numero_carrelli', # NUOVO
-                         'pronto', 'note', 'painting_list'] # NUOVO
+                         'pronto', 'note', 'painting_list', 'fatto'] # NUOVO con fatto
     update_values = [numero_settimana, linea, colore, 
                      numero_carrelli, # NUOVO
-                     pronto, note, painting_list] # NUOVO
+                     pronto, note, painting_list, int(fatto)] # NUOVO con fatto
     
     set_clause = ', '.join([f'{col} = ?' for col in columns_to_update])
     update_values.append(item_id)
@@ -341,6 +312,29 @@ def update_kit_item(sequence_num, item_id):
     finally:
         if conn: conn.close()
     return jsonify({"success": True})
+
+@app.route('/api/update_fatto/<int:sequence_num>/<int:item_id>', methods=['PUT'])
+def update_fatto_status(sequence_num, item_id):
+    if not (1 <= sequence_num <= 7):
+        return jsonify({"success": False, "error": "Numero sequenza non valido"}), 400
+    
+    data = request.json
+    fatto = data.get('fatto', False)
+    
+    conn = sqlite3.connect(DATABASE_PATH)
+    c = conn.cursor()
+    
+    try:
+        c.execute(f'UPDATE sequence_{sequence_num} SET fatto = ? WHERE id = ?', 
+                  (int(fatto), item_id))
+        conn.commit()
+        if c.rowcount == 0:
+            return jsonify({"success": False, "error": "Item non trovato"}), 404
+        return jsonify({"success": True})
+    except sqlite3.Error as e:
+        return jsonify({"success": False, "error": f"Errore DB: {str(e)}"}), 500
+    finally:
+        if conn: conn.close()
 
 # delete_kit_item e clear_kit_sequence_by_week rimangono invariati
 
