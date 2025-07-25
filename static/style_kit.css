@@ -423,6 +423,38 @@ textarea {
     color: #666;
 }
 
+/* Stili per la colonna checkbox completato */
+.kit-table .checkbox-cell {
+    text-align: center;
+    width: 80px;
+}
+
+.kit-table .completato-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #28a745;
+}
+
+.kit-table .completato-checkbox:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s;
+}
+
+/* Stili per le righe completate */
+.kit-table .completed-row {
+    background-color: #e8f5e8 !important;
+    opacity: 0.7;
+}
+
+.kit-table .completed-row:hover {
+    background-color: #d4f4d4 !important;
+}
+
+.kit-table .completed-row td {
+    color: #666;
+}
+
 .text-center {
     text-align: center;
     color: #666;
@@ -651,35 +683,4 @@ textarea {
     color: #999;
     font-style: italic;
     font-size: 12px;
-}
-
-/* Stili per checkbox "Fatto" */
-.fatto-checkbox {
-    transform: scale(1.2);
-    margin: 0 auto;
-    display: block;
-}
-
-.fatto-cell {
-    text-align: center;
-    width: 60px;
-}
-
-.fatto-cell input[type="checkbox"] {
-    transform: scale(1.3);
-    cursor: pointer;
-}
-
-.fatto-cell input[type="checkbox"]:checked {
-    accent-color: #28a745;
-}
-
-/* Stile per riga completata */
-.kit-table tr.completed {
-    background-color: #f8f9fa;
-    opacity: 0.7;
-}
-
-.kit-table tr.completed td {
-    color: #6c757d;
 }
