@@ -132,7 +132,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const escapeForHtmlAttr = (jsonString) => jsonString.replace(/'/g, "'");
 
             tableBody.innerHTML = items.map(item => `
-                <tr class="${item.fatto ? 'completed' : ''}">
+                <tr class="${item.completato ? 'completed-row' : ''}">
+                    <td class="checkbox-cell">
+                        <input type="checkbox" 
+                               ${item.completato ? 'checked' : ''} 
+                               onchange="toggleCompletato(${currentSequenceNum}, ${item.id}, this)"
+                               class="completato-checkbox">
+                    </td>
                     <td>${item.linea || 'N/D'}</td>
                     <td>${formatColor(item.colore)}</td>
                     <td>${item.numero_carrelli !== null ? item.numero_carrelli : 'N/D'}</td>
@@ -140,10 +146,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td><span class="${item.pronto === 'Si' ? 'status-ready' : (item.pronto === 'Parziale' ? 'status-partial' : 'status-not-ready')}">${item.pronto}</span></td>
                     <td>${createPaintingListCell(item.painting_list)}</td>
                     <td class="notes-cell">${item.note || ''}</td>
-                    <td class="fatto-cell">
-                        <input type="checkbox" class="fatto-checkbox" ${item.fatto ? 'checked' : ''} 
-                               onchange="updateFattoStatus(${currentSequenceNum}, ${item.id}, this.checked)">
-                    </td>
                     <td class="action-buttons">
                         <button class="edit-btn" onclick='openEditKitModal(${escapeForHtmlAttr(JSON.stringify(item))})'>✎</button>
                         <button class="delete-btn" onclick="deleteKitItemFromDisplay(${item.sequenza}, ${item.id})">×</button>
@@ -156,6 +158,36 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tableBody) {
                 tableBody.innerHTML = "<tr><td colspan='9' class='text-center'>Errore caricamento kit.</td></tr>";
             }
+        }
+    }
+
+    // Funzione per gestire il toggle del checkbox completato
+    window.toggleCompletato = async function(sequenceNum, itemId, checkbox) {
+        try {
+            const response = await fetch(`/api/toggle_completato/${sequenceNum}/${itemId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                // Aggiorna la classe CSS della riga
+                const row = checkbox.closest('tr');
+                if (result.new_completato) {
+                    row.classList.add('completed-row');
+                } else {
+                    row.classList.remove('completed-row');
+                }
+            } else {
+                // Ripristina lo stato del checkbox in caso di errore
+                checkbox.checked = !checkbox.checked;
+                alert(`Errore aggiornamento completato: ${result.error || 'Sconosciuto'}`);
+            }
+        } catch (error) {
+            // Ripristina lo stato del checkbox in caso di errore
+            checkbox.checked = !checkbox.checked;
+            console.error('Errore toggle completato:', error);
+            alert('Errore di comunicazione durante l\'aggiornamento.');
         }
     }
 
@@ -183,8 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
             numero_carrelli: document.getElementById('modalEditNumeroCarrelli').value, // NUOVO
             pronto: document.getElementById('modalEditPronto').value,
             note: document.getElementById('modalEditNote').value,
-            painting_list: document.getElementById('modalEditPaintingList').value,
-            fatto: document.getElementById('modalEditFatto').checked // NUOVO
+            painting_list: document.getElementById('modalEditPaintingList').value
         };
 
         try {
@@ -214,7 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalEditNumeroCarrelli').value = item.numero_carrelli !== null ? item.numero_carrelli : ''; // NUOVO
         document.getElementById('modalEditPronto').value = item.pronto || 'No';
         document.getElementById('modalEditNote').value = item.note || '';
-        document.getElementById('modalEditFatto').checked = item.fatto || false; // NUOVO
         
         // Popola la Painting List
         const modalEditPaintingList = document.getElementById('modalEditPaintingList');
@@ -321,35 +351,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Rendi le funzioni globali
     window.createPaintingListCell = createPaintingListCell;
     window.togglePaintingDropdown = togglePaintingDropdown;
-
-    // Funzione per aggiornare lo stato "fatto"
-    async function updateFattoStatus(sequenceNum, itemId, fatto) {
-        try {
-            const response = await fetch(`/api/update_fatto/${sequenceNum}/${itemId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fatto: fatto })
-            });
-            
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                alert(`Errore aggiornamento stato: ${result.error || 'Sconosciuto'}`);
-                // Ripristina il checkbox in caso di errore
-                event.target.checked = !fatto;
-                return;
-            }
-            
-            // Ricarica la tabella per aggiornare lo stile delle righe
-            loadKitItems();
-        } catch (error) {
-            console.error('Errore update fatto status:', error);
-            alert('Errore di comunicazione.');
-            // Ripristina il checkbox in caso di errore
-            event.target.checked = !fatto;
-        }
-    }
-
-    window.updateFattoStatus = updateFattoStatus;
 
     loadAvailableLineeForModal();
     loadKitItems();
