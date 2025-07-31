@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kit Sequenza {{ seq_num }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style_kit.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
         /* ... stili esistenti ... */
         .item-info > span { margin-right: 5px; } 
@@ -76,9 +77,9 @@
                         <label for="modalEditColore">COLORE</label>
                         <input type="text" id="modalEditColore" name="colore" required>
                     </div>
-                    <!-- NUOVO CAMPO NUMERO CARRELLI NEL MODAL -->
+                    <!-- NUOVO CAMPO NUMERO COLLI NEL MODAL -->
                     <div class="form-group">
-                        <label for="modalEditNumeroCarrelli">NUMERO CARRELLI</label>
+                        <label for="modalEditNumeroCarrelli">NUMERO COLLI</label>
                         <input type="number" id="modalEditNumeroCarrelli" name="numero_carrelli" min="0">
                     </div>
                     <div class="form-group">
@@ -105,6 +106,19 @@
                             <input type="text" id="modalEditPaintingListScanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
                             <button type="button" id="modalEditClearPaintingList" class="clear-btn">Pulisci Lista</button>
                         </div>
+                        
+                        <!-- Controlli per il lettore di codici a barre nel modal -->
+                        <div class="barcode-scanner">
+                            <div class="barcode-controls">
+                                <button type="button" id="startModalBarcodeScanner" class="scanner-btn start-scanner-btn">📷 Avvia Scanner</button>
+                                <button type="button" id="stopModalBarcodeScanner" class="scanner-btn stop-scanner-btn" style="display: none;">⏹ Ferma Scanner</button>
+                            </div>
+                            <div id="modalScannerStatus" class="scanner-status"></div>
+                            <div id="modalBarcodeScannerContainer" class="barcode-scanner-container">
+                                <div id="modalScanner"></div>
+                            </div>
+                        </div>
+                        
                         <div class="scanned-codes-table">
                             <table>
                                 <thead>
@@ -131,6 +145,7 @@
     <script>
         const currentSequenceNum = {{ seq_num }};
     </script>
+    <script src="{{ url_for('static', filename='barcode_scanner.js') }}"></script>
     <script src="{{ url_for('static', filename='sequence_display_kit.js') }}"></script>
 </body>
 </html>

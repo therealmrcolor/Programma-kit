@@ -61,6 +61,16 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRecentKitItems(); 
     setupKitModal(); 
     setupPaintingList(); // Setup Painting List functionality
+    
+    // Setup Barcode Scanner dopo che tutto è caricato
+    if (typeof setupBarcodeForPaintingList !== 'undefined') {
+        setupBarcodeForPaintingList(''); // Prefisso vuoto per il form principale
+        
+        // Setup per il modal di edit (se esiste)
+        setTimeout(() => {
+            setupBarcodeForPaintingList('edit'); // Prefisso per il modal edit
+        }, 100);
+    }
 
     // Funzione per gestire la Painting List
     function setupPaintingList() {
@@ -174,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
             linea: document.getElementById('linea').value,
             colore: coloreValue,
             sequenza: document.getElementById('sequenza').value,
-            numero_carrelli: document.getElementById('numero_carrelli').value, // NUOVO
+            numero_carrelli: document.getElementById('numero_carrelli').value, // NUOVO COLLI
             pronto: document.getElementById('pronto').value,
             note: document.getElementById('note').value,
             painting_list: document.getElementById('painting_list').value
@@ -321,7 +331,7 @@ window.editKitItem = function(item) {
     document.getElementById('editNumeroSettimana').value = item.numero_settimana || '';
     document.getElementById('editLinea').value = item.linea || ''; 
     document.getElementById('editColore').value = item.colore || '';
-    document.getElementById('editNumeroCarrelli').value = item.numero_carrelli !== null ? item.numero_carrelli : ''; // NUOVO
+    document.getElementById('editNumeroCarrelli').value = item.numero_carrelli !== null ? item.numero_carrelli : ''; // NUOVO COLLI
     document.getElementById('editPronto').value = item.pronto || 'No';
     document.getElementById('editNote').value = item.note || '';
     
@@ -353,7 +363,7 @@ async function updateKitItem() {
         numero_settimana: document.getElementById('editNumeroSettimana').value,
         linea: document.getElementById('editLinea').value,
         colore: editColoreValue,
-        numero_carrelli: document.getElementById('editNumeroCarrelli').value, // NUOVO
+        numero_carrelli: document.getElementById('editNumeroCarrelli').value, // NUOVO COLLI
         pronto: document.getElementById('editPronto').value,
         note: document.getElementById('editNote').value,
         painting_list: document.getElementById('editPaintingList').value

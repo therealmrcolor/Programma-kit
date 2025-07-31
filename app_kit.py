@@ -101,7 +101,7 @@ def init_db():
             linea TEXT,
             colore TEXT NOT NULL,
             sequenza TEXT NOT NULL,
-            numero_carrelli INTEGER, -- NUOVO CAMPO
+            numero_carrelli INTEGER, -- NUMERO COLLI
             pronto TEXT NOT NULL,
             note TEXT,
             painting_list TEXT,
@@ -115,7 +115,7 @@ def init_db():
         
         if 'numero_carrelli' not in columns:
             c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN numero_carrelli INTEGER')
-            print(f"Aggiunta colonna numero_carrelli a sequence_{i}")
+            print(f"Aggiunta colonna numero_carrelli (NUMERO COLLI) a sequence_{i}")
             
         if 'painting_list' not in columns:
             c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN painting_list TEXT')
@@ -207,7 +207,7 @@ def add_item():
     linea = data.get('linea')
     colore = data.get('colore')
     sequenza_target_str = data.get('sequenza')
-    numero_carrelli_str = data.get('numero_carrelli') # NUOVO
+    numero_carrelli_str = data.get('numero_carrelli') # NUMERO COLLI
     pronto = data.get('pronto')
     note = data.get('note', '')
     painting_list = data.get('painting_list', '') # NUOVO
@@ -221,7 +221,7 @@ def add_item():
         try:
             numero_carrelli = int(numero_carrelli_str)
         except (ValueError, TypeError):
-            return jsonify({"success": False, "error": "Numero carrelli deve essere un intero"}), 400
+            return jsonify({"success": False, "error": "Numero colli deve essere un intero"}), 400
             
     if not colore: return jsonify({"success": False, "error": "Colore mancante"}), 400
     if not pronto: return jsonify({"success": False, "error": "Stato 'Pronto' mancante"}), 400
@@ -236,12 +236,12 @@ def add_item():
     
     columns_ordered = [
         'numero_settimana', 'linea', 'colore', 'sequenza', 
-        'numero_carrelli', # NUOVO
+        'numero_carrelli', # NUMERO COLLI
         'pronto', 'note', 'painting_list', 'timestamp', 'completato' # NUOVO
     ]
     values_ordered = [
         numero_settimana, linea, colore, sequenza_target_str, 
-        numero_carrelli, # NUOVO
+        numero_carrelli, # NUMERO COLLI
         pronto, note, painting_list, datetime.now(), 0 # NUOVO - completato inizialmente a False
     ]
 
@@ -322,7 +322,7 @@ def update_kit_item(sequence_num, item_id):
     numero_settimana_str = data.get('numero_settimana')
     linea = data.get('linea', '')
     colore = data.get('colore')
-    numero_carrelli_str = data.get('numero_carrelli') # NUOVO
+    numero_carrelli_str = data.get('numero_carrelli') # NUMERO COLLI
     pronto = data.get('pronto')
     note = data.get('note', '')
     painting_list = data.get('painting_list', '') # NUOVO
@@ -336,7 +336,7 @@ def update_kit_item(sequence_num, item_id):
         try:
             numero_carrelli = int(numero_carrelli_str)
         except (ValueError, TypeError):
-            return jsonify({"success": False, "error": "Numero carrelli deve essere un intero"}), 400
+            return jsonify({"success": False, "error": "Numero colli deve essere un intero"}), 400
 
     if not colore: return jsonify({"success": False, "error": "Colore mancante"}), 400
     if not pronto: return jsonify({"success": False, "error": "Stato 'Pronto' mancante"}), 400
@@ -345,10 +345,10 @@ def update_kit_item(sequence_num, item_id):
     c = conn.cursor()
     
     columns_to_update = ['numero_settimana', 'linea', 'colore', 
-                         'numero_carrelli', # NUOVO
+                         'numero_carrelli', # NUMERO COLLI
                          'pronto', 'note', 'painting_list'] # NUOVO
     update_values = [numero_settimana, linea, colore, 
-                     numero_carrelli, # NUOVO
+                     numero_carrelli, # NUMERO COLLI
                      pronto, note, painting_list] # NUOVO
     
     set_clause = ', '.join([f'{col} = ?' for col in columns_to_update])
