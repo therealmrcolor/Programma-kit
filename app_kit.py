@@ -164,6 +164,10 @@ def kit_sequence_display_page(seq_num):
         return render_template('sequence_display_kit.html', seq_num=seq_num)
     return "Sequenza Kit non trovata", 404
 
+@app.route('/network-test')
+def network_test_page():
+    return render_template('network_test.html')
+
 # --- API per Linee (invariate) ---
 @app.route('/api/get_linee', methods=['GET'])
 def get_linee():
