@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kit Sequenza {{ seq_num }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style_kit.css') }}">
-    <!-- ZXing library per scansione codici a barre -->
-    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <style>
         /* ... stili esistenti ... */
         .item-info > span { margin-right: 5px; } 
@@ -105,7 +103,6 @@
                     <div id="modalEditPaintingListContainer" class="painting-list-container">
                         <div class="painting-list-input-group">
                             <input type="text" id="modalEditPaintingListScanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
-                            <button type="button" id="modalEditBarcodeScanBtn" class="barcode-scan-btn">📷 Scansiona</button>
                             <button type="button" id="modalEditClearPaintingList" class="clear-btn">Pulisci Lista</button>
                         </div>
                         <div class="scanned-codes-table">
@@ -131,13 +128,9 @@
         </div>
     </div>
 
-    <!-- Contenitore per il Barcode Scanner -->
-    <div id="barcodeScannerContainer"></div>
-
     <script>
         const currentSequenceNum = {{ seq_num }};
     </script>
-    <script src="{{ url_for('static', filename='barcode_scanner.js') }}"></script>
     <script src="{{ url_for('static', filename='sequence_display_kit.js') }}"></script>
 </body>
 </html>

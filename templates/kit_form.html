@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inserimento Kit Verniciato</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style_kit.css') }}">
-    <!-- ZXing library per scansione codici a barre -->
-    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <style>
         .kit-form-header { /* ... */ }
     </style>
@@ -58,10 +56,10 @@
                         <option value="7">7</option>
                     </select>
                 </div>
-                <!-- NUOVO CAMPO NUMERO CARRELLI -->
+                <!-- NUOVO CAMPO NUMERO COLLI -->
                 <div class="form-group">
-                    <label for="numero_carrelli">NUMERO CARRELLI</label>
-                    <input type="number" id="numero_carrelli" name="numero_carrelli" min="0">
+                    <label for="numero_colli">NUMERO COLLI</label>
+                    <input type="number" id="numero_colli" name="numero_colli" min="0">
                 </div>
                 <div class="form-group">
                     <label for="pronto">PRONTO</label>
@@ -86,7 +84,6 @@
                 <div id="paintingListContainer" class="painting-list-container">
                     <div class="painting-list-input-group">
                         <input type="text" id="painting_list_scanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
-                        <button type="button" id="barcodeScanBtn" class="barcode-scan-btn">📷 Scansiona</button>
                         <button type="button" id="clearPaintingList" class="clear-btn">Pulisci Lista</button>
                     </div>
                     <div class="scanned-codes-table">
@@ -154,10 +151,10 @@
                     </div>
                 </div>
                  <div class="form-row">
-                    <!-- NUOVO CAMPO NUMERO CARRELLI NEL MODAL -->
+                    <!-- NUOVO CAMPO NUMERO COLLI NEL MODAL -->
                     <div class="form-group">
-                        <label for="editNumeroCarrelli">NUMERO CARRELLI</label>
-                        <input type="number" id="editNumeroCarrelli" name="numero_carrelli" min="0">
+                        <label for="editNumeroColli">NUMERO COLLI</label>
+                        <input type="number" id="editNumeroColli" name="numero_colli" min="0">
                     </div>
                     <div class="form-group">
                         <label for="editPronto">PRONTO</label>
@@ -181,7 +178,6 @@
                     <div id="editPaintingListContainer" class="painting-list-container">
                         <div class="painting-list-input-group">
                             <input type="text" id="editPaintingListScanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
-                            <button type="button" id="editBarcodeScanBtn" class="barcode-scan-btn">📷 Scansiona</button>
                             <button type="button" id="editClearPaintingList" class="clear-btn">Pulisci Lista</button>
                         </div>
                         <div class="scanned-codes-table">
@@ -208,10 +204,6 @@
         </div>
     </div>
 
-    <!-- Contenitore per il Barcode Scanner -->
-    <div id="barcodeScannerContainer"></div>
-
-    <script src="{{ url_for('static', filename='barcode_scanner.js') }}"></script>
     <script src="{{ url_for('static', filename='kit_form.js') }}"></script>
 </body>
 </html>
