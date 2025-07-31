@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inserimento Kit Verniciato</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style_kit.css') }}">
+    <!-- ZXing library per scansione codici a barre -->
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <style>
         .kit-form-header { /* ... */ }
     </style>
@@ -84,6 +86,7 @@
                 <div id="paintingListContainer" class="painting-list-container">
                     <div class="painting-list-input-group">
                         <input type="text" id="painting_list_scanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
+                        <button type="button" id="barcodeScanBtn" class="barcode-scan-btn">📷 Scansiona</button>
                         <button type="button" id="clearPaintingList" class="clear-btn">Pulisci Lista</button>
                     </div>
                     <div class="scanned-codes-table">
@@ -178,6 +181,7 @@
                     <div id="editPaintingListContainer" class="painting-list-container">
                         <div class="painting-list-input-group">
                             <input type="text" id="editPaintingListScanner" placeholder="Scansiona o inserisci codice e premi INVIO" autocomplete="off">
+                            <button type="button" id="editBarcodeScanBtn" class="barcode-scan-btn">📷 Scansiona</button>
                             <button type="button" id="editClearPaintingList" class="clear-btn">Pulisci Lista</button>
                         </div>
                         <div class="scanned-codes-table">
@@ -204,6 +208,10 @@
         </div>
     </div>
 
+    <!-- Contenitore per il Barcode Scanner -->
+    <div id="barcodeScannerContainer"></div>
+
+    <script src="{{ url_for('static', filename='barcode_scanner.js') }}"></script>
     <script src="{{ url_for('static', filename='kit_form.js') }}"></script>
 </body>
 </html>

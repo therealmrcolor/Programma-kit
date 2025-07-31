@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRecentKitItems(); 
     setupKitModal(); 
     setupPaintingList(); // Setup Painting List functionality
+    setupBarcodeScanner(); // Setup Barcode Scanner functionality
 
     // Funzione per gestire la Painting List
     function setupPaintingList() {
@@ -81,6 +82,135 @@ document.addEventListener('DOMContentLoaded', function() {
             'editPaintingListCount', 
             'editClearPaintingList'
         );
+    }
+
+    // Funzione per gestire il Barcode Scanner
+    function setupBarcodeScanner() {
+        // Setup per form principale
+        const barcodeScanBtn = document.getElementById('barcodeScanBtn');
+        if (barcodeScanBtn) {
+            barcodeScanBtn.addEventListener('click', function() {
+                const onBarcodeDetected = function(code) {
+                    console.log('Codice rilevato dal scanner (form principale):', code);
+                    
+                    const hiddenInput = document.getElementById('painting_list');
+                    const tableBody = document.getElementById('scannedCodesBody');
+                    const countElement = document.getElementById('paintingListCount');
+                    
+                    if (hiddenInput && tableBody && countElement) {
+                        addCodeToPaintingList(code, hiddenInput, tableBody, countElement);
+                        showTemporaryMessage(`Codice "${code}" aggiunto alla lista!`, 'success');
+                    }
+                };
+                
+                if (window.barcodeScanner) {
+                    window.barcodeScanner.showScannerUI('barcodeScannerContainer', onBarcodeDetected);
+                } else {
+                    console.error('Barcode scanner non disponibile');
+                    alert('Scanner non disponibile. Assicurati che la libreria ZXing sia caricata correttamente.');
+                }
+            });
+        }
+
+        // Setup per modal di modifica
+        const editBarcodeScanBtn = document.getElementById('editBarcodeScanBtn');
+        if (editBarcodeScanBtn) {
+            editBarcodeScanBtn.addEventListener('click', function() {
+                const onBarcodeDetected = function(code) {
+                    console.log('Codice rilevato dal scanner (modal modifica):', code);
+                    
+                    const hiddenInput = document.getElementById('editPaintingList');
+                    const tableBody = document.getElementById('editScannedCodesBody');
+                    const countElement = document.getElementById('editPaintingListCount');
+                    
+                    if (hiddenInput && tableBody && countElement) {
+                        addCodeToPaintingList(code, hiddenInput, tableBody, countElement);
+                        showTemporaryMessage(`Codice "${code}" aggiunto alla lista!`, 'success');
+                    }
+                };
+                
+                if (window.barcodeScanner) {
+                    window.barcodeScanner.showScannerUI('barcodeScannerContainer', onBarcodeDetected);
+                } else {
+                    console.error('Barcode scanner non disponibile');
+                    alert('Scanner non disponibile. Assicurati che la libreria ZXing sia caricata correttamente.');
+                }
+            });
+        }
+    }
+
+    // Funzione per mostrare messaggi temporanei
+    function showTemporaryMessage(message, type = 'info') {
+        // Rimuovi eventuali messaggi esistenti
+        const existingMessage = document.querySelector('.temp-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Crea il nuovo messaggio
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `temp-message temp-message-${type}`;
+        messageDiv.textContent = message;
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            z-index: 10001;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 300px;
+            word-wrap: break-word;
+            ${type === 'success' ? 'background-color: #28a745;' : 
+              type === 'error' ? 'background-color: #dc3545;' : 
+              'background-color: #007bff;'}
+        `;
+        
+        document.body.appendChild(messageDiv);
+        
+        // Rimuovi il messaggio dopo 3 secondi
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.remove();
+                    }
+                }, 300);
+            }
+        }, 3000);
+    }
+
+    // Aggiungi gli stili CSS per le animazioni dei messaggi (se non già presenti)
+    if (!document.getElementById('temp-message-styles')) {
+        const style = document.createElement('style');
+        style.id = 'temp-message-styles';
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     function setupPaintingListForForm(scannerId, hiddenInputId, tableBodyId, countId, clearBtnId) {
