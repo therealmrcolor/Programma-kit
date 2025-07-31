@@ -10,15 +10,6 @@ TEMPLATE_FOLDER = 'templates'
 
 app = Flask(__name__, static_folder=STATIC_FOLDER, template_folder=TEMPLATE_FOLDER)
 
-# Middleware per forzare HTTPS quando necessario per la fotocamera
-@app.before_request
-def force_https():
-    # Solo su produzione, non in locale
-    if not request.is_secure and request.host != 'localhost' and '127.0.0.1' not in request.host:
-        # Controlla se la richiesta è per le funzionalità della fotocamera
-        if 'barcode' in request.path.lower() or 'camera' in request.path.lower():
-            return redirect(request.url.replace('http://', 'https://'), code=301)
-
 def adapt_datetime(ts):
     return ts.isoformat()
 
@@ -110,7 +101,7 @@ def init_db():
             linea TEXT,
             colore TEXT NOT NULL,
             sequenza TEXT NOT NULL,
-            numero_carrelli INTEGER, -- NUMERO COLLI
+            numero_carrelli INTEGER, -- NUOVO CAMPO
             pronto TEXT NOT NULL,
             note TEXT,
             painting_list TEXT,
@@ -124,7 +115,7 @@ def init_db():
         
         if 'numero_carrelli' not in columns:
             c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN numero_carrelli INTEGER')
-            print(f"Aggiunta colonna numero_carrelli (NUMERO COLLI) a sequence_{i}")
+            print(f"Aggiunta colonna numero_carrelli a sequence_{i}")
             
         if 'painting_list' not in columns:
             c.execute(f'ALTER TABLE sequence_{i} ADD COLUMN painting_list TEXT')
@@ -163,10 +154,6 @@ def kit_sequence_display_page(seq_num):
     if 1 <= seq_num <= 7:
         return render_template('sequence_display_kit.html', seq_num=seq_num)
     return "Sequenza Kit non trovata", 404
-
-@app.route('/network-test')
-def network_test_page():
-    return render_template('network_test.html')
 
 # --- API per Linee (invariate) ---
 @app.route('/api/get_linee', methods=['GET'])
@@ -220,7 +207,7 @@ def add_item():
     linea = data.get('linea')
     colore = data.get('colore')
     sequenza_target_str = data.get('sequenza')
-    numero_carrelli_str = data.get('numero_carrelli') # NUMERO COLLI
+    numero_carrelli_str = data.get('numero_carrelli') # NUOVO
     pronto = data.get('pronto')
     note = data.get('note', '')
     painting_list = data.get('painting_list', '') # NUOVO
@@ -234,7 +221,7 @@ def add_item():
         try:
             numero_carrelli = int(numero_carrelli_str)
         except (ValueError, TypeError):
-            return jsonify({"success": False, "error": "Numero colli deve essere un intero"}), 400
+            return jsonify({"success": False, "error": "Numero carrelli deve essere un intero"}), 400
             
     if not colore: return jsonify({"success": False, "error": "Colore mancante"}), 400
     if not pronto: return jsonify({"success": False, "error": "Stato 'Pronto' mancante"}), 400
@@ -249,12 +236,12 @@ def add_item():
     
     columns_ordered = [
         'numero_settimana', 'linea', 'colore', 'sequenza', 
-        'numero_carrelli', # NUMERO COLLI
+        'numero_carrelli', # NUOVO
         'pronto', 'note', 'painting_list', 'timestamp', 'completato' # NUOVO
     ]
     values_ordered = [
         numero_settimana, linea, colore, sequenza_target_str, 
-        numero_carrelli, # NUMERO COLLI
+        numero_carrelli, # NUOVO
         pronto, note, painting_list, datetime.now(), 0 # NUOVO - completato inizialmente a False
     ]
 
@@ -335,7 +322,7 @@ def update_kit_item(sequence_num, item_id):
     numero_settimana_str = data.get('numero_settimana')
     linea = data.get('linea', '')
     colore = data.get('colore')
-    numero_carrelli_str = data.get('numero_carrelli') # NUMERO COLLI
+    numero_carrelli_str = data.get('numero_carrelli') # NUOVO
     pronto = data.get('pronto')
     note = data.get('note', '')
     painting_list = data.get('painting_list', '') # NUOVO
@@ -349,7 +336,7 @@ def update_kit_item(sequence_num, item_id):
         try:
             numero_carrelli = int(numero_carrelli_str)
         except (ValueError, TypeError):
-            return jsonify({"success": False, "error": "Numero colli deve essere un intero"}), 400
+            return jsonify({"success": False, "error": "Numero carrelli deve essere un intero"}), 400
 
     if not colore: return jsonify({"success": False, "error": "Colore mancante"}), 400
     if not pronto: return jsonify({"success": False, "error": "Stato 'Pronto' mancante"}), 400
@@ -358,10 +345,10 @@ def update_kit_item(sequence_num, item_id):
     c = conn.cursor()
     
     columns_to_update = ['numero_settimana', 'linea', 'colore', 
-                         'numero_carrelli', # NUMERO COLLI
+                         'numero_carrelli', # NUOVO
                          'pronto', 'note', 'painting_list'] # NUOVO
     update_values = [numero_settimana, linea, colore, 
-                     numero_carrelli, # NUMERO COLLI
+                     numero_carrelli, # NUOVO
                      pronto, note, painting_list] # NUOVO
     
     set_clause = ', '.join([f'{col} = ?' for col in columns_to_update])
@@ -449,174 +436,5 @@ def clear_kit_sequence_by_week(sequence_num, week_num):
 
 if __name__ == '__main__':
     init_db()
-    
-    # Controlla se vogliamo HTTPS per la fotocamera
-    import ssl
-    import argparse
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--https', action='store_true', help='Avvia con HTTPS per supporto fotocamera')
-    parser.add_argument('--localhost', action='store_true', help='Avvia solo su localhost (fotocamera funziona senza HTTPS)')
-    parser.add_argument('--network', action='store_true', help='Avvia su rete locale (Android camera su IP locale)')
-    args, unknown = parser.parse_known_args()
-    
-    if args.https:
-        # Crea certificato auto-firmato se non esiste
-        import subprocess
-        import os
-        
-        cert_file = 'server.crt'
-        key_file = 'server.key'
-        
-        if not os.path.exists(cert_file) or not os.path.exists(key_file):
-            print("Creazione certificato auto-firmato per HTTPS...")
-            
-            # Metodo 1: Prova con OpenSSL (se disponibile)
-            openssl_success = False
-            try:
-                subprocess.run([
-                    'openssl', 'req', '-x509', '-newkey', 'rsa:2048', 
-                    '-keyout', key_file, '-out', cert_file, '-days', '365', '-nodes',
-                    '-subj', '/CN=localhost'
-                ], check=True, capture_output=True)
-                print("✅ Certificato creato con OpenSSL")
-                openssl_success = True
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                print("OpenSSL non disponibile, provo con Python...")
-            
-            # Metodo 2: Usa cryptography se OpenSSL non funziona
-            if not openssl_success:
-                try:
-                    from cryptography import x509
-                    from cryptography.x509.oid import NameOID
-                    from cryptography.hazmat.primitives import hashes
-                    from cryptography.hazmat.primitives.asymmetric import rsa
-                    from cryptography.hazmat.primitives import serialization
-                    from datetime import datetime, timedelta
-                    import ipaddress
-                    
-                    # Genera chiave privata
-                    private_key = rsa.generate_private_key(
-                        public_exponent=65537,
-                        key_size=2048,
-                    )
-                    
-                    # Crea certificato
-                    subject = issuer = x509.Name([
-                        x509.NameAttribute(NameOID.COUNTRY_NAME, "IT"),
-                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Local"),
-                        x509.NameAttribute(NameOID.LOCALITY_NAME, "Local"),
-                        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Kit Manager"),
-                        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-                    ])
-                    
-                    cert = x509.CertificateBuilder().subject_name(
-                        subject
-                    ).issuer_name(
-                        issuer
-                    ).public_key(
-                        private_key.public_key()
-                    ).serial_number(
-                        x509.random_serial_number()
-                    ).not_valid_before(
-                        datetime.utcnow()
-                    ).not_valid_after(
-                        datetime.utcnow() + timedelta(days=365)
-                    ).add_extension(
-                        x509.SubjectAlternativeName([
-                            x509.DNSName("localhost"),
-                            x509.DNSName("127.0.0.1"),
-                            x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                            x509.IPAddress(ipaddress.IPv4Address("0.0.0.0")),
-                        ]),
-                        critical=False,
-                    ).sign(private_key, hashes.SHA256())
-                    
-                    # Salva chiave privata
-                    with open(key_file, "wb") as f:
-                        f.write(private_key.private_bytes(
-                            encoding=serialization.Encoding.PEM,
-                            format=serialization.PrivateFormat.PKCS8,
-                            encryption_algorithm=serialization.NoEncryption()
-                        ))
-                    
-                    # Salva certificato
-                    with open(cert_file, "wb") as f:
-                        f.write(cert.public_bytes(serialization.Encoding.PEM))
-                    
-                    print("✅ Certificato creato con Python/cryptography")
-                    
-                except ImportError:
-                    # Metodo 3: Fallback - crea certificato di base con SSL standard
-                    print("cryptography non disponibile, uso metodo semplificato...")
-                    try:
-                        # Usa il modulo ssl standard per creare un contesto auto-firmato
-                        import ssl
-                        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-                        context.check_hostname = False
-                        context.verify_mode = ssl.CERT_NONE
-                        
-                        print("✅ Uso contesto SSL semplificato (senza certificato)")
-                        print("🔒 Avvio Kit Manager server HTTPS su https://0.0.0.0:5125")
-                        print("⚠️  Su Android: accetta l'avviso di sicurezza nel browser")
-                        print("📱 Se non funziona, usa: python3 app_kit.py --localhost")
-                        
-                        # Avvia direttamente con contesto semplificato
-                        serve(app, host='0.0.0.0', port=5125)
-                        exit(0)
-                        
-                    except Exception as ssl_error:
-                        print(f"❌ Errore SSL: {ssl_error}")
-                        print("💡 SOLUZIONE: Installa cryptography con:")
-                        print("   pip install cryptography")
-                        print("   oppure usa: python3 app_kit.py --localhost")
-                        exit(1)
-                        
-                except Exception as e:
-                    print(f"❌ Errore creazione certificato: {e}")
-                    print("💡 SOLUZIONE: Usa python3 app_kit.py --localhost")
-                    exit(1)
-        
-        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-        context.load_cert_chain(cert_file, key_file)
-        
-        print("🔒 Avvio Kit Manager server HTTPS su https://0.0.0.0:5125")
-        print("⚠️  IMPORTANTE: Accetta il certificato auto-firmato nel browser")
-        print("📱 Su Android: tocca 'Avanzate' → 'Procedi comunque' quando appare l'avviso di sicurezza")
-        
-        serve(app, host='0.0.0.0', port=5125, url_scheme='https', 
-              ssl_context=context)
-    elif args.network:
-        import socket
-        
-        # Ottieni l'IP locale
-        def get_local_ip():
-            try:
-                # Connessione temporanea per ottenere l'IP locale
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                local_ip = s.getsockname()[0]
-                s.close()
-                return local_ip
-            except:
-                return "IP-NON-TROVATO"
-        
-        local_ip = get_local_ip()
-        print("📱 Modalità NETWORK - Kit Manager per Android")
-        print(f"🌐 Server HTTP su: http://0.0.0.0:5125")
-        print(f"📱 ACCEDI DA ANDROID con: http://{local_ip}:5125")
-        print("✅ La fotocamera funziona su IP di rete locale senza HTTPS")
-        print(f"💡 Assicurati che Android e PC siano sulla stessa rete WiFi")
-        serve(app, host='0.0.0.0', port=5125)
-    elif args.localhost:
-        print("🏠 Avvio Kit Manager server su localhost:5125")
-        print("📱 Accedi da: http://localhost:5125 o http://127.0.0.1:5125")
-        print("✅ La fotocamera funziona su localhost senza HTTPS")
-        serve(app, host='127.0.0.1', port=5125)
-    else:
-        print("🌐 Avvio Kit Manager server HTTP su http://0.0.0.0:5125")
-        print("📱 Per usare la fotocamera su Android:")
-        print("   - Su rete locale: python3 app_kit.py --network")
-        print("   - Su localhost: python3 app_kit.py --localhost")
-        print("   - Con HTTPS: python3 app_kit.py --https")
-        serve(app, host='0.0.0.0', port=5125)
+    print("Avvio Kit Manager server Waitress su http://0.0.0.0:5125")
+    serve(app, host='0.0.0.0', port=5125)

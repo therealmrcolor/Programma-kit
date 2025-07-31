@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
             numero_settimana: document.getElementById('modalEditNumeroSettimana').value,
             linea: document.getElementById('modalEditLinea').value,
             colore: modalEditColoreValue,
-            numero_carrelli: document.getElementById('modalEditNumeroCarrelli').value, // NUOVO COLLI
+            numero_carrelli: document.getElementById('modalEditNumeroCarrelli').value, // NUOVO
             pronto: document.getElementById('modalEditPronto').value,
             note: document.getElementById('modalEditNote').value,
             painting_list: document.getElementById('modalEditPaintingList').value
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalEditNumeroSettimana').value = item.numero_settimana || '';
         document.getElementById('modalEditLinea').value = item.linea || '';
         document.getElementById('modalEditColore').value = item.colore || '';
-        document.getElementById('modalEditNumeroCarrelli').value = item.numero_carrelli !== null ? item.numero_carrelli : ''; // NUOVO COLLI
+        document.getElementById('modalEditNumeroCarrelli').value = item.numero_carrelli !== null ? item.numero_carrelli : ''; // NUOVO
         document.getElementById('modalEditPronto').value = item.pronto || 'No';
         document.getElementById('modalEditNote').value = item.note || '';
         
@@ -354,9 +354,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadAvailableLineeForModal();
     loadKitItems();
-    
-    // Setup Barcode Scanner per il modal di modifica dopo che tutto è caricato
-    if (typeof setupBarcodeForPaintingList !== 'undefined') {
-        setupBarcodeForPaintingList('modalEdit'); // Prefisso per il modal
-    }
 });
