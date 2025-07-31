@@ -86,11 +86,17 @@ class BarcodeScanner {
 
     // Controlla se il browser supporta la fotocamera
     checkCameraSupport() {
-        // Verifica HTTPS (richiesto per la fotocamera)
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        // Verifica HTTPS (richiesto per la fotocamera, eccetto localhost)
+        const isLocalhost = location.hostname === 'localhost' || 
+                          location.hostname === '127.0.0.1' || 
+                          location.hostname.startsWith('192.168.') ||
+                          location.hostname.startsWith('10.') ||
+                          location.hostname.includes('local');
+                          
+        if (location.protocol !== 'https:' && !isLocalhost) {
             return {
                 supported: false,
-                error: 'La fotocamera richiede una connessione HTTPS. Accedi al sito tramite https://'
+                error: 'La fotocamera richiede HTTPS o localhost. Accedi tramite https:// o localhost'
             };
         }
 

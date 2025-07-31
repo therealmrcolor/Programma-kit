@@ -445,5 +445,54 @@ def clear_kit_sequence_by_week(sequence_num, week_num):
 
 if __name__ == '__main__':
     init_db()
-    print("Avvio Kit Manager server Waitress su http://0.0.0.0:5125")
-    serve(app, host='0.0.0.0', port=5125)
+    
+    # Controlla se vogliamo HTTPS per la fotocamera
+    import ssl
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--https', action='store_true', help='Avvia con HTTPS per supporto fotocamera')
+    parser.add_argument('--localhost', action='store_true', help='Avvia solo su localhost (fotocamera funziona senza HTTPS)')
+    args, unknown = parser.parse_known_args()
+    
+    if args.https:
+        # Crea certificato auto-firmato se non esiste
+        import subprocess
+        import os
+        
+        cert_file = 'server.crt'
+        key_file = 'server.key'
+        
+        if not os.path.exists(cert_file) or not os.path.exists(key_file):
+            print("Creazione certificato auto-firmato per HTTPS...")
+            try:
+                subprocess.run([
+                    'openssl', 'req', '-x509', '-newkey', 'rsa:4096', 
+                    '-keyout', key_file, '-out', cert_file, '-days', '365', '-nodes',
+                    '-subj', '/CN=localhost'
+                ], check=True)
+                print("✅ Certificato creato con successo")
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                print("❌ Errore: OpenSSL non trovato. Usa l'opzione --localhost invece")
+                exit(1)
+        
+        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        context.load_cert_chain(cert_file, key_file)
+        
+        print("🔒 Avvio Kit Manager server HTTPS su https://0.0.0.0:5125")
+        print("⚠️  IMPORTANTE: Accetta il certificato auto-firmato nel browser")
+        print("📱 Su Android: tocca 'Avanzate' → 'Procedi comunque' quando appare l'avviso di sicurezza")
+        
+        serve(app, host='0.0.0.0', port=5125, url_scheme='https', 
+              ssl_context=context)
+    elif args.localhost:
+        print("🏠 Avvio Kit Manager server su localhost:5125")
+        print("📱 Accedi da: http://localhost:5125 o http://127.0.0.1:5125")
+        print("✅ La fotocamera funziona su localhost senza HTTPS")
+        serve(app, host='127.0.0.1', port=5125)
+    else:
+        print("🌐 Avvio Kit Manager server HTTP su http://0.0.0.0:5125")
+        print("📱 Per usare la fotocamera:")
+        print("   - Su localhost: python3 app_kit.py --localhost")
+        print("   - Con HTTPS: python3 app_kit.py --https")
+        serve(app, host='0.0.0.0', port=5125)

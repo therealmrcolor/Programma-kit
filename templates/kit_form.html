@@ -16,15 +16,20 @@
         // Controlla se siamo su Android e mostra istruzioni per i permessi fotocamera
         if (/Android/i.test(navigator.userAgent)) {
             // Controlla se è HTTP invece di HTTPS
-            if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            const isLocalhost = location.hostname === 'localhost' || 
+                              location.hostname === '127.0.0.1';
+                              
+            if (location.protocol === 'http:' && !isLocalhost) {
                 setTimeout(() => {
                     alert('⚠️ IMPORTANTE PER ANDROID:\n\n' +
-                          'Per usare la fotocamera per il barcode scanner è necessario HTTPS.\n' +
-                          'Accedi al sito tramite https:// invece di http://');
+                          'Per usare la fotocamera per il barcode scanner:\n' +
+                          '1. Riavvia l\'app con: python3 app_kit.py --https\n' +
+                          '2. Oppure usa: python3 app_kit.py --localhost\n' +
+                          '3. Poi accedi tramite https:// o localhost');
                 }, 1000);
             } else {
                 // Su HTTPS o localhost, mostra istruzioni per i permessi
-                console.log('🤖 Android rilevato - Istruzioni per fotocamera disponibili nei pulsanti scanner');
+                console.log('🤖 Android rilevato - Usa il pulsante "Testa Permessi" se hai problemi con la fotocamera');
             }
         }
     </script>
