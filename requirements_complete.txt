@@ -1,0 +1,24 @@
+# Requirements per Kit Manager - Versione Completa con HTTPS
+flask
+waitress
+cryptography
+
+# Note di installazione:
+# 
+# Per Windows:
+# 1. Installa Python 3.8+ da python.org
+# 2. Apri Command Prompt come amministratore
+# 3. pip install -r requirements_complete.txt
+# 4. python app_kit.py --https
+#
+# Per macOS:
+# 1. Assicurati di avere Python 3.8+
+# 2. pip install -r requirements_complete.txt  
+# 3. python3 app_kit.py --https
+#
+# Se cryptography da problemi:
+# - Windows: pip install --upgrade pip setuptools wheel, poi pip install cryptography
+# - macOS: brew install rust (se necessario), poi pip install cryptography
+#
+# Alternativa senza HTTPS:
+# python app_kit.py --localhost (fotocamera funziona solo su localhost)

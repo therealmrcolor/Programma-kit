@@ -86,17 +86,19 @@ class BarcodeScanner {
 
     // Controlla se il browser supporta la fotocamera
     checkCameraSupport() {
-        // Verifica HTTPS (richiesto per la fotocamera, eccetto localhost)
-        const isLocalhost = location.hostname === 'localhost' || 
-                          location.hostname === '127.0.0.1' || 
-                          location.hostname.startsWith('192.168.') ||
-                          location.hostname.startsWith('10.') ||
-                          location.hostname.includes('local');
+        // Verifica HTTPS (richiesto per la fotocamera, eccetto reti locali)
+        const isLocalNetwork = location.hostname === 'localhost' || 
+                              location.hostname === '127.0.0.1' || 
+                              location.hostname.startsWith('192.168.') ||
+                              location.hostname.startsWith('10.') ||
+                              location.hostname.startsWith('172.') ||
+                              location.hostname.includes('local') ||
+                              /^(\d{1,3}\.){3}\d{1,3}$/.test(location.hostname); // Qualsiasi IP locale
                           
-        if (location.protocol !== 'https:' && !isLocalhost) {
+        if (location.protocol !== 'https:' && !isLocalNetwork) {
             return {
                 supported: false,
-                error: 'La fotocamera richiede HTTPS o localhost. Accedi tramite https:// o localhost'
+                error: 'La fotocamera richiede HTTPS o rete locale. Accedi tramite IP locale (es: 192.168.1.100:5125)'
             };
         }
 

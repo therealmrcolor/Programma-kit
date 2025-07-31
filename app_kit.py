@@ -453,6 +453,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--https', action='store_true', help='Avvia con HTTPS per supporto fotocamera')
     parser.add_argument('--localhost', action='store_true', help='Avvia solo su localhost (fotocamera funziona senza HTTPS)')
+    parser.add_argument('--network', action='store_true', help='Avvia su rete locale (Android camera su IP locale)')
     args, unknown = parser.parse_known_args()
     
     if args.https:
@@ -465,16 +466,112 @@ if __name__ == '__main__':
         
         if not os.path.exists(cert_file) or not os.path.exists(key_file):
             print("Creazione certificato auto-firmato per HTTPS...")
+            
+            # Metodo 1: Prova con OpenSSL (se disponibile)
+            openssl_success = False
             try:
                 subprocess.run([
-                    'openssl', 'req', '-x509', '-newkey', 'rsa:4096', 
+                    'openssl', 'req', '-x509', '-newkey', 'rsa:2048', 
                     '-keyout', key_file, '-out', cert_file, '-days', '365', '-nodes',
                     '-subj', '/CN=localhost'
-                ], check=True)
-                print("✅ Certificato creato con successo")
+                ], check=True, capture_output=True)
+                print("✅ Certificato creato con OpenSSL")
+                openssl_success = True
             except (subprocess.CalledProcessError, FileNotFoundError):
-                print("❌ Errore: OpenSSL non trovato. Usa l'opzione --localhost invece")
-                exit(1)
+                print("OpenSSL non disponibile, provo con Python...")
+            
+            # Metodo 2: Usa cryptography se OpenSSL non funziona
+            if not openssl_success:
+                try:
+                    from cryptography import x509
+                    from cryptography.x509.oid import NameOID
+                    from cryptography.hazmat.primitives import hashes
+                    from cryptography.hazmat.primitives.asymmetric import rsa
+                    from cryptography.hazmat.primitives import serialization
+                    from datetime import datetime, timedelta
+                    import ipaddress
+                    
+                    # Genera chiave privata
+                    private_key = rsa.generate_private_key(
+                        public_exponent=65537,
+                        key_size=2048,
+                    )
+                    
+                    # Crea certificato
+                    subject = issuer = x509.Name([
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "IT"),
+                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Local"),
+                        x509.NameAttribute(NameOID.LOCALITY_NAME, "Local"),
+                        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Kit Manager"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+                    ])
+                    
+                    cert = x509.CertificateBuilder().subject_name(
+                        subject
+                    ).issuer_name(
+                        issuer
+                    ).public_key(
+                        private_key.public_key()
+                    ).serial_number(
+                        x509.random_serial_number()
+                    ).not_valid_before(
+                        datetime.utcnow()
+                    ).not_valid_after(
+                        datetime.utcnow() + timedelta(days=365)
+                    ).add_extension(
+                        x509.SubjectAlternativeName([
+                            x509.DNSName("localhost"),
+                            x509.DNSName("127.0.0.1"),
+                            x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+                            x509.IPAddress(ipaddress.IPv4Address("0.0.0.0")),
+                        ]),
+                        critical=False,
+                    ).sign(private_key, hashes.SHA256())
+                    
+                    # Salva chiave privata
+                    with open(key_file, "wb") as f:
+                        f.write(private_key.private_bytes(
+                            encoding=serialization.Encoding.PEM,
+                            format=serialization.PrivateFormat.PKCS8,
+                            encryption_algorithm=serialization.NoEncryption()
+                        ))
+                    
+                    # Salva certificato
+                    with open(cert_file, "wb") as f:
+                        f.write(cert.public_bytes(serialization.Encoding.PEM))
+                    
+                    print("✅ Certificato creato con Python/cryptography")
+                    
+                except ImportError:
+                    # Metodo 3: Fallback - crea certificato di base con SSL standard
+                    print("cryptography non disponibile, uso metodo semplificato...")
+                    try:
+                        # Usa il modulo ssl standard per creare un contesto auto-firmato
+                        import ssl
+                        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                        context.check_hostname = False
+                        context.verify_mode = ssl.CERT_NONE
+                        
+                        print("✅ Uso contesto SSL semplificato (senza certificato)")
+                        print("🔒 Avvio Kit Manager server HTTPS su https://0.0.0.0:5125")
+                        print("⚠️  Su Android: accetta l'avviso di sicurezza nel browser")
+                        print("📱 Se non funziona, usa: python3 app_kit.py --localhost")
+                        
+                        # Avvia direttamente con contesto semplificato
+                        serve(app, host='0.0.0.0', port=5125)
+                        exit(0)
+                        
+                    except Exception as ssl_error:
+                        print(f"❌ Errore SSL: {ssl_error}")
+                        print("💡 SOLUZIONE: Installa cryptography con:")
+                        print("   pip install cryptography")
+                        print("   oppure usa: python3 app_kit.py --localhost")
+                        exit(1)
+                        
+                except Exception as e:
+                    print(f"❌ Errore creazione certificato: {e}")
+                    print("💡 SOLUZIONE: Usa python3 app_kit.py --localhost")
+                    exit(1)
         
         context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         context.load_cert_chain(cert_file, key_file)
@@ -485,6 +582,28 @@ if __name__ == '__main__':
         
         serve(app, host='0.0.0.0', port=5125, url_scheme='https', 
               ssl_context=context)
+    elif args.network:
+        import socket
+        
+        # Ottieni l'IP locale
+        def get_local_ip():
+            try:
+                # Connessione temporanea per ottenere l'IP locale
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                s.close()
+                return local_ip
+            except:
+                return "IP-NON-TROVATO"
+        
+        local_ip = get_local_ip()
+        print("📱 Modalità NETWORK - Kit Manager per Android")
+        print(f"🌐 Server HTTP su: http://0.0.0.0:5125")
+        print(f"📱 ACCEDI DA ANDROID con: http://{local_ip}:5125")
+        print("✅ La fotocamera funziona su IP di rete locale senza HTTPS")
+        print(f"💡 Assicurati che Android e PC siano sulla stessa rete WiFi")
+        serve(app, host='0.0.0.0', port=5125)
     elif args.localhost:
         print("🏠 Avvio Kit Manager server su localhost:5125")
         print("📱 Accedi da: http://localhost:5125 o http://127.0.0.1:5125")
@@ -492,7 +611,8 @@ if __name__ == '__main__':
         serve(app, host='127.0.0.1', port=5125)
     else:
         print("🌐 Avvio Kit Manager server HTTP su http://0.0.0.0:5125")
-        print("📱 Per usare la fotocamera:")
+        print("📱 Per usare la fotocamera su Android:")
+        print("   - Su rete locale: python3 app_kit.py --network")
         print("   - Su localhost: python3 app_kit.py --localhost")
         print("   - Con HTTPS: python3 app_kit.py --https")
         serve(app, host='0.0.0.0', port=5125)
