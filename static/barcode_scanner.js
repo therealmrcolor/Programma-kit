@@ -28,6 +28,11 @@ class BarcodeScanner {
             return;
         }
 
+        // Aggiungi pulsante di test permessi se siamo su Android
+        if (this.isAndroid()) {
+            this.addPermissionTestButton(startButton, statusElement);
+        }
+
         startButton.addEventListener('click', () => {
             this.startScanning(config);
         });
@@ -35,6 +40,120 @@ class BarcodeScanner {
         stopButton.addEventListener('click', () => {
             this.stopScanning(config);
         });
+    }
+
+    // Aggiunge un pulsante per testare i permessi
+    addPermissionTestButton(startButton, statusElement) {
+        // Crea pulsante di test solo se non esiste già
+        const existingTestButton = document.getElementById('testCameraPermission');
+        if (existingTestButton) return;
+
+        const testButton = document.createElement('button');
+        testButton.type = 'button';
+        testButton.id = 'testCameraPermission';
+        testButton.className = 'scanner-btn test-permission-btn';
+        testButton.textContent = '🔧 Testa Permessi';
+        testButton.style.marginLeft = '10px';
+        testButton.style.backgroundColor = '#FFA500';
+
+        testButton.addEventListener('click', async () => {
+            this.updateStatus(statusElement, 'Test permessi fotocamera...', 'scanning');
+            
+            const supportCheck = this.checkCameraSupport();
+            if (!supportCheck.supported) {
+                this.updateStatus(statusElement, supportCheck.error, 'error');
+                return;
+            }
+
+            try {
+                const result = await this.requestCameraPermission();
+                if (result.success) {
+                    this.updateStatus(statusElement, '✅ Permessi OK! Ora puoi avviare il scanner', 'success');
+                } else {
+                    throw result.error;
+                }
+            } catch (error) {
+                this.updateStatus(statusElement, '❌ Errore permessi: ' + error.message, 'error');
+                setTimeout(() => {
+                    this.showAndroidInstructions(statusElement);
+                }, 2000);
+            }
+        });
+
+        // Inserisci il pulsante dopo il pulsante di avvio
+        startButton.parentNode.insertBefore(testButton, startButton.nextSibling);
+    }
+
+    // Controlla se il browser supporta la fotocamera
+    checkCameraSupport() {
+        // Verifica HTTPS (richiesto per la fotocamera)
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            return {
+                supported: false,
+                error: 'La fotocamera richiede una connessione HTTPS. Accedi al sito tramite https://'
+            };
+        }
+
+        // Verifica supporto MediaDevices
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return {
+                supported: false,
+                error: 'Il tuo browser non supporta l\'accesso alla fotocamera'
+            };
+        }
+
+        return { supported: true };
+    }
+
+    // Richiede esplicitamente i permessi della fotocamera
+    async requestCameraPermission() {
+        try {
+            // Primo tentativo con fotocamera posteriore
+            let stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+            
+            // Se funziona, ferma lo stream temporaneo
+            stream.getTracks().forEach(track => track.stop());
+            return { success: true };
+            
+        } catch (error) {
+            console.log('Tentativo fotocamera posteriore fallito, provo quella frontale:', error);
+            
+            try {
+                // Secondo tentativo con fotocamera frontale
+                let stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+                
+                stream.getTracks().forEach(track => track.stop());
+                return { success: true };
+                
+            } catch (secondError) {
+                console.log('Tentativo fotocamera frontale fallito:', secondError);
+                
+                try {
+                    // Terzo tentativo con impostazioni basilari
+                    let stream = await navigator.mediaDevices.getUserMedia({
+                        video: true
+                    });
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                    return { success: true };
+                    
+                } catch (finalError) {
+                    return { success: false, error: finalError };
+                }
+            }
+        }
     }
 
     // Avvia la scansione
@@ -58,11 +177,30 @@ class BarcodeScanner {
             return;
         }
 
+        // Controlla supporto browser
+        const supportCheck = this.checkCameraSupport();
+        if (!supportCheck.supported) {
+            this.updateStatus(statusElement, supportCheck.error, 'error');
+            return;
+        }
+
+        this.updateStatus(statusElement, 'Richiesta permesso fotocamera...', 'scanning');
+
         try {
-            // Richiedi permessi per la fotocamera
+            // Richiedi esplicitamente i permessi
+            const permissionResult = await this.requestCameraPermission();
+            if (!permissionResult.success) {
+                throw permissionResult.error;
+            }
+
+            this.updateStatus(statusElement, 'Inizializzazione scanner...', 'scanning');
+
+            // Ora inizializza effettivamente la fotocamera per Quagga
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: { 
-                    facingMode: 'environment' // Usa la fotocamera posteriore se disponibile
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
                 } 
             });
 
@@ -139,16 +277,33 @@ class BarcodeScanner {
         } catch (error) {
             console.error('Errore accesso fotocamera:', error);
             let errorMessage = 'Errore accesso fotocamera';
+            let troubleshootingMessage = '';
             
             if (error.name === 'NotAllowedError') {
-                errorMessage = 'Permesso fotocamera negato. Abilita la fotocamera nelle impostazioni del browser.';
+                errorMessage = 'Permesso fotocamera negato';
+                troubleshootingMessage = 'Per Android: Vai nelle Impostazioni del browser → Permessi sito → Fotocamera → Consenti';
             } else if (error.name === 'NotFoundError') {
-                errorMessage = 'Nessuna fotocamera trovata su questo dispositivo.';
-            } else if (error.name === 'NotSupportedError') {
-                errorMessage = 'Fotocamera non supportata su questo browser.';
+                errorMessage = 'Nessuna fotocamera trovata';
+                troubleshootingMessage = 'Verifica che il dispositivo abbia una fotocamera funzionante';
+            } else if (error.name === 'NotSupportedError' || error.name === 'NotReadableError') {
+                errorMessage = 'Fotocamera non disponibile';
+                troubleshootingMessage = 'La fotocamera potrebbe essere utilizzata da un\'altra app. Chiudi altre app che usano la fotocamera e riprova';
+            } else if (error.name === 'OverconstrainedError') {
+                errorMessage = 'Configurazione fotocamera non supportata';
+                troubleshootingMessage = 'Prova a ricaricare la pagina';
+            } else if (error.message && error.message.includes('https')) {
+                errorMessage = 'HTTPS richiesto per la fotocamera';
+                troubleshootingMessage = 'Accedi al sito tramite https:// invece di http://';
             }
             
-            this.updateStatus(statusElement, errorMessage, 'error');
+            this.updateStatus(statusElement, `${errorMessage}. ${troubleshootingMessage}`, 'error');
+            
+            // Su Android, mostra istruzioni aggiuntive
+            if (this.isAndroid()) {
+                setTimeout(() => {
+                    this.showAndroidInstructions(statusElement);
+                }, 3000);
+            }
         }
     }
 
@@ -178,11 +333,45 @@ class BarcodeScanner {
         this.updateStatus(statusElement, 'Scanner fermato', '');
     }
 
+    // Rileva se siamo su Android
+    isAndroid() {
+        return /Android/i.test(navigator.userAgent);
+    }
+
+    // Mostra istruzioni specifiche per Android
+    showAndroidInstructions(statusElement) {
+        const instructions = [
+            "📱 ISTRUZIONI PER ANDROID:",
+            "1. Tocca l'icona 🔒 o ⚙️ nella barra degli indirizzi",
+            "2. Cerca 'Permessi sito' o 'Fotocamera'", 
+            "3. Seleziona 'Consenti' per la fotocamera",
+            "4. Ricarica la pagina e riprova",
+            "",
+            "Se non funziona ancora:",
+            "• Verifica di essere su HTTPS (non HTTP)",
+            "• Chiudi altre app che usano la fotocamera",
+            "• Prova con un browser diverso (Chrome/Firefox)"
+        ];
+        
+        this.updateStatus(statusElement, instructions.join('\n'), 'error');
+    }
+
     // Aggiorna lo stato del scanner
     updateStatus(statusElement, message, statusClass = '') {
         if (statusElement) {
             statusElement.textContent = message;
             statusElement.className = 'scanner-status' + (statusClass ? ' ' + statusClass : '');
+            
+            // Se il messaggio contiene newline, usa <pre> per preservare la formattazione
+            if (message.includes('\n')) {
+                statusElement.style.whiteSpace = 'pre-line';
+                statusElement.style.textAlign = 'left';
+                statusElement.style.fontSize = '12px';
+            } else {
+                statusElement.style.whiteSpace = 'normal';
+                statusElement.style.textAlign = 'center';
+                statusElement.style.fontSize = '14px';
+            }
         }
     }
 

@@ -11,6 +11,24 @@
     </style>
 </head>
 <body>
+    <!-- Alert specifico per Android -->
+    <script>
+        // Controlla se siamo su Android e mostra istruzioni per i permessi fotocamera
+        if (/Android/i.test(navigator.userAgent)) {
+            // Controlla se è HTTP invece di HTTPS
+            if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                setTimeout(() => {
+                    alert('⚠️ IMPORTANTE PER ANDROID:\n\n' +
+                          'Per usare la fotocamera per il barcode scanner è necessario HTTPS.\n' +
+                          'Accedi al sito tramite https:// invece di http://');
+                }, 1000);
+            } else {
+                // Su HTTPS o localhost, mostra istruzioni per i permessi
+                console.log('🤖 Android rilevato - Istruzioni per fotocamera disponibili nei pulsanti scanner');
+            }
+        }
+    </script>
+
     <nav>
         <a href="{{ url_for('kit_form_page') }}" class="nav-item">Inserimento Kit</a>
         <a href="{{ url_for('manage_linee_page') }}" class="nav-item">Gestione Linee</a>

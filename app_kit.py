@@ -10,6 +10,15 @@ TEMPLATE_FOLDER = 'templates'
 
 app = Flask(__name__, static_folder=STATIC_FOLDER, template_folder=TEMPLATE_FOLDER)
 
+# Middleware per forzare HTTPS quando necessario per la fotocamera
+@app.before_request
+def force_https():
+    # Solo su produzione, non in locale
+    if not request.is_secure and request.host != 'localhost' and '127.0.0.1' not in request.host:
+        # Controlla se la richiesta è per le funzionalità della fotocamera
+        if 'barcode' in request.path.lower() or 'camera' in request.path.lower():
+            return redirect(request.url.replace('http://', 'https://'), code=301)
+
 def adapt_datetime(ts):
     return ts.isoformat()
 
